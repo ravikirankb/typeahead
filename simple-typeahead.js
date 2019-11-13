@@ -1,10 +1,9 @@
-
 (function ($) {
     $.fn.simple_typeahead = function (options) {
 
 
         function Typeahead(el, args) {
-            let plugin = this;
+            let autocomplete = this;
             let element = el;
 
             var settings = $.extend({
@@ -24,9 +23,51 @@
                 highlightsearchkey: false
             }, args);
 
-            plugin.element = el;
-            plugin.settings = settings;
-            
+            autocomplete.element = el;
+            autocomplete.settings = settings;
+			
+			let control = autocomplete.el;
+			
+			let keycodes ={
+				DOWN:37,
+				UP:38,
+				ESC:27,
+				ENTER:13,
+				SPACE:32,
+				RIGHT:39,
+				LEFT:40
+			}
+			
+				
+            autocomplete.initialize = function(){
+				
+				
+			};
+			
+			autocomplete.filter = function(searchterm){
+				
+				
+			};
+			
+			control.addEventListener("keydown",function(){
+				
+				
+			});
+			
+		    control.addEventListener("keyup",function(){
+				
+				
+			});
+			
+			control.addEventListener("escape",function(){
+				
+				
+			});
+			
+			
+			
+			
+			autocomplete.initialize();
 
         }
 
