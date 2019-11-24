@@ -20,6 +20,7 @@
                 minChars: 1,
                 isremoteoptionenabled: false,
                 orientation: 'bottom',
+			    searchmode:'begins',
                 highlightsearchkey: false
             }, args);
 
@@ -48,6 +49,90 @@
 				
 				
 			};
+			
+			autocomplete.buildsuggestionslist = function(data,searchterm){
+				if(!data)
+					return;
+					
+				var div,s;
+				/*create a DIV element that will contain the items (values):*/
+			    div = document.createElement("DIV");
+			    div.setAttribute("id", this.id + "autocomplete-list");
+	            div.setAttribute("class", "autocomplete-items");
+   		       /*append the DIV element as a child of the autocomplete container:*/
+			    this.parentNode.appendChild(a);
+				
+				for(var i=0;i<data.length;i++){					
+					let currentObj = this.getDataFromObject(data[i],searchterm);
+					if(currentObj != undefined){
+						s = document.createElement("DIV");
+						let innerHtml = "<strong "+ this.settings.highlightsearchkey? "class='hightlight-search-key'" :""+">" + currentObj.displayObject.substr(0,searchterm.length) + "</strong>";
+						innerHtml += currentObj.displayObject.substr(searchterm.length);	
+						innerHtml += "<input type='hidden' value='"+currentObj.displayObject+"'>";
+						s.innerHTML = innerHtml;
+						s.addEventListener("click",function(e){
+							
+						});
+						div.appendChild(s);
+					}						
+				}
+			}
+			
+			autocomplete.getDataFromObject = function(currentObject,searchterm){
+				const searchmode = this.settings.searchmode;
+				const isplainobject = currentObject.constructor == 'String';
+				let objecttoreturn = undefined;
+				if(searchmode == 'begins'){
+					if(isplainobject){
+						if(currentObject.substr(0, searchterm.length).toUpperCase() == searchterm.toUpperCase()){
+							objecttoreturn ={
+								displayObject: currentObject,
+								keyObject:currentObject
+							}
+						}
+					}
+					else{
+						let dataValue = currentObject[this.settings.displayExpr];
+						let keyValue = currentObject[this.settings.keyExpr];
+						if(dataValue == undefined)
+							throw "The display expression was not found. Make sure the displayExpr key is correct";
+						
+						if(dataValue.substr(0, searchterm.length).toUpperCase() == searchterm.toUpperCase()){
+							objecttoreturn ={
+								displayObject: dataValue,
+								keyObject:keyValue
+							}
+						}
+					}
+				}
+				else{
+					if(isplainobject){
+						if(currentObject.toUpperCase().indexOf(searchterm.toUpperCase()) > -1){
+							objecttoreturn ={
+								displayObject: currentObject,
+								keyObject:currentObject
+							}
+						}
+					}
+					else{
+						let dataValue = currentObject[this.settings.displayExpr];
+						let keyValue = currentObject[this.settings.keyExpr];
+						if(dataValue == undefined)
+							throw "The display expression was not found. Make sure the displayExpr key is correct";
+						
+						if(dataValue.toUpperCase().indexOf(searchterm.toUpperCase()) > -1){
+							objecttoreturn ={
+								displayObject: dataValue,
+								keyObject:keyValue
+							}
+						}
+					}
+				}
+				
+				return objecttoreturn;
+			}
+			
+			
 			
 			control.addEventListener("keydown",function(){
 				
