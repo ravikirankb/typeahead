@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Typeahead</title>
+    <link rel="stylesheet" href="/autocomplete.css" />
+    <script src="https://code.jquery.com/jquery-3.4.1.js"
+        integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+    <script src="/simple-autocomplete.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            let typeahead = $("input").simple_typeahead({ data: ['India', 'Pakistan', 'Bangladesh', 'Nepal', 'Bhutan', 'Korea', 'Sri Lanka'] });
+        });
+    </script>
+</head>
+
+<body>
+    <h1>Type ahead</h1>
+    <input value="Enter" id="mytextbox " style="width: 200px;" placeholder="Enter">
+</body>
+
+</html>
