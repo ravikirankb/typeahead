@@ -52,12 +52,18 @@
 
                 autocomplete.el.val('');
                 autocomplete.el.attr("placeholder", autocomplete.settings.placeHolderText); // Set placeholder if any.
+                autocomplete.initContainer();
                 autocomplete.initEvents();
             };
 
             autocomplete.logError = function (message) {
                 console.error(message);
             }
+
+            autocomplete.initContainer = function(){
+               let parentContainer = utils.helper.getParentContainer(),el = autocomplete.el;
+               el.wrap(parentContainer);
+            };
 
             autocomplete.initEvents = function () {
                 let control = autocomplete.el;
@@ -93,7 +99,7 @@
                         x[i].parentNode.removeChild(x[i]);
                     }
                 }
-                $('.autocomplete').remove();                    
+                // $('.autocomplete').remove();
             }
 
             autocomplete.getSuggestions = function () {
@@ -120,16 +126,14 @@
                     return;
 
                 autocomplete.closeSuggestionsBox();
-                let that = autocomplete.element;
-                var parentDiv, div, s;
-                /*create a DIV element that will contain the items (values):*/
-                parentDiv = utils.helper.getParentContainer();
+                let that = autocomplete.element, el = autocomplete.el;
+                var div, s;
+                /*create a DIV element that will contain the items (values):*/                
                 div = document.createElement("DIV");
                 div.setAttribute("id", that.id + "autocomplete-list");
                 div.setAttribute("class", "autocomplete-items");
-                /*append the DIV element as a child of the autocomplete container:*/
+                /*append the DIV element as a child of the autocomplete container:*/            
                 that.parentNode.appendChild(div);
-                // parentDiv.appendChild(div);
 
                 for (var i = 0; i < data.length; i++) {
                     let currentObj = this.getDataFromObject(data[i], searchterm);
