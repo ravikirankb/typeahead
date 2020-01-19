@@ -26,10 +26,23 @@
             let utils = {
                 helper: (function () {
                     return {
-                        getParentContainer: function () {
+                        getParentContainer: function (width) {
                             let div = document.createElement('div');
                             div.setAttribute('class', 'autocomplete');
-                            div.style.width = '300px';
+                            div.style.width = width + 'px';
+                            return div;
+                        },
+                        getNoSuggestionsDiv: function (width, nosuggestionstext) {
+                            let div = document.createElement('div');
+                            div.setAttribute('class', 'autocomplete');
+                            div.style.width = width + 'px';
+                            div.style.fontStyle = "italic";
+                            if (nosuggestionstext.substr(0) == '-') {
+                                div.text = nosuggestionstext;
+                            }
+                            else {
+                                div.text = "--" + nosuggestionstext + "--";
+                            }
                             return div;
                         }
                     }
@@ -52,6 +65,7 @@
 
                 autocomplete.el.val('');
                 autocomplete.el.attr("placeholder", autocomplete.settings.placeHolderText); // Set placeholder if any.
+                autocomplete.el.attr("autocomplete", "off");
                 autocomplete.initContainer();
                 autocomplete.initEvents();
             };
@@ -60,9 +74,10 @@
                 console.error(message);
             }
 
-            autocomplete.initContainer = function(){
-               let parentContainer = utils.helper.getParentContainer(),el = autocomplete.el;
-               el.wrap(parentContainer);
+            // init wrapper container on the input element.
+            autocomplete.initContainer = function () {
+                let el = autocomplete.el, parentContainer = utils.helper.getParentContainer(el.width);
+                el.wrap(parentContainer);
             };
 
             autocomplete.initEvents = function () {
@@ -70,13 +85,12 @@
 
                 control.on("focus.autocomplete", function (e) {
                     let text = this.value;
-                    if (text.length >= autocomplete.settings.minChars) {
-                        let data = autocomplete.getSuggestions();
-                        if (data)
-                            autocomplete.buildsuggestionslist(data, text);
-                        else
-                            autocomplete.showNoSuggestionsBox();
-                    }
+                    autocomplete.handleInputChange(text);
+                });
+
+                control.on("input propertychange paste", function (e) {
+                    let text = this.value;
+                    autocomplete.handleInputChange(text);
                 });
 
                 control.on("blur.autocomplete", function (e) {
@@ -88,8 +102,20 @@
                 });
             };
 
-            autocomplete.showNoSuggestionsBox = function () {
+            autocomplete.handleInputChange = function (text) {
+                if (text.length >= autocomplete.settings.minChars) {
+                    let data = autocomplete.getSuggestions();
+                    if (data)
+                        autocomplete.buildsuggestionslist(data, text);
+                    else
+                        autocomplete.showNoSuggestionsBox();
+                }
+            };
 
+            autocomplete.showNoSuggestionsBox = function () {
+                let nosuggestionsdiv = utils.helper.getNoSuggestionsDiv(autocomplete.el.width, autocomplete.settings.nosuggestionsText);
+                let that = autocomplete.element;
+                that.parentNode.appendChild(nosuggestionsdiv);
             };
 
             autocomplete.closeSuggestionsBox = function (elmnt) {
@@ -99,7 +125,6 @@
                         x[i].parentNode.removeChild(x[i]);
                     }
                 }
-                // $('.autocomplete').remove();
             }
 
             autocomplete.getSuggestions = function () {
@@ -128,16 +153,18 @@
                 autocomplete.closeSuggestionsBox();
                 let that = autocomplete.element, el = autocomplete.el;
                 var div, s;
-                /*create a DIV element that will contain the items (values):*/                
+                /*create a DIV element that will contain the items (values):*/
                 div = document.createElement("DIV");
                 div.setAttribute("id", that.id + "autocomplete-list");
                 div.setAttribute("class", "autocomplete-items");
-                /*append the DIV element as a child of the autocomplete container:*/            
+                /*append the DIV element as a child of the autocomplete container:*/
                 that.parentNode.appendChild(div);
 
+                let isSuggestionFound = false;
                 for (var i = 0; i < data.length; i++) {
                     let currentObj = this.getDataFromObject(data[i], searchterm);
                     if (currentObj != undefined) {
+                        isSuggestionFound = true;
                         s = document.createElement("DIV");
                         let innerHtml = "<strong " + (this.settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.displayObject.substr(0, searchterm.length) + "</strong>";
                         innerHtml += currentObj.displayObject.substr(searchterm.length);
@@ -148,6 +175,9 @@
                         });
                         div.appendChild(s);
                     }
+                }
+                if (!isSuggestionFound) {
+                    autocomplete.showNoSuggestionsBox(el.width, autocomplete.settings.nosuggestionsText);
                 }
             }
 
