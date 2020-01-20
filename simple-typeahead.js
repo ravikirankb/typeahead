@@ -33,28 +33,31 @@
                             return div;
                         },
                         getNoSuggestionsDiv: function (width, nosuggestionstext) {
+                            let divP = document.createElement('div');
+                            divP.setAttribute('class', 'autocomplete-items no-suggestions');
+                            divP.style.width = width + 'px';
                             let div = document.createElement('div');
-                            div.setAttribute('class', 'autocomplete');
-                            div.style.width = width + 'px';
                             div.style.fontStyle = "italic";
                             if (nosuggestionstext.substr(0) == '-') {
-                                div.text = nosuggestionstext;
+                                div.innerHTML = nosuggestionstext;
                             }
                             else {
-                                div.text = "--" + nosuggestionstext + "--";
+                                div.innerHTML = "--" + nosuggestionstext + "--";
                             }
-                            return div;
+                            divP.appendChild(div);
+                            return divP;
                         }
                     }
                 })(),
                 keycodes: {
-                    DOWN: 37,
+                    DOWN: 40,
                     UP: 38,
                     ESC: 27,
                     ENTER: 13,
                     SPACE: 32,
                     RIGHT: 39,
-                    LEFT: 40
+                    LEFT: 37,
+                    TAB: 9
                 }
             };
 
@@ -100,6 +103,21 @@
                 control.on("keypress", function (e) {
 
                 });
+
+                control.on("keydown.autocomplete", function (e) {
+                    let __autocomplete_list, __active_element = $('.autocomplete-items div.autcomplete-active');
+                    if (e.keyCode == utils.keycodes.DOWN) {
+                        __autocomplete_list = $('.autocomplete-items div')[0];
+                    }
+                    if (e.keyCode == utils.keycodes.UP) {
+                        __autocomplete_list = $('.autocomplete-items div')[$('.autocomplete-items div').length - 1];
+                    }
+                    if (__autocomplete_list != undefined) {
+                        __autocomplete_list.setAttribute('class', 'autocomplete-active');
+                        __autocomplete_list.focus();
+                        $(__active_element).removeClass('autocomplete-active');
+                    }
+                });
             };
 
             autocomplete.handleInputChange = function (text) {
@@ -124,6 +142,10 @@
                     if (elmnt != x[i]) {
                         x[i].parentNode.removeChild(x[i]);
                     }
+                }
+
+                if ($(".no-suggestions").length >= 1) {
+                    $(".no-suggestions").remove();
                 }
             }
 
@@ -171,7 +193,23 @@
                         innerHtml += "<input type='hidden' value='" + currentObj.displayObject + "'>";
                         s.innerHTML = innerHtml;
                         s.addEventListener("click", function (e) {
+                            alert('click');
                             autocomplete.settings.onSelected.call(e);
+                        });
+                        s.addEventListener("onenter", function (e) {
+                            alert('enter');
+                        });
+                        s.addEventListener("keypress", function (e) {
+                            alert('keypress');
+                        });
+                        s.addEventListener("keydown", function (e) {
+                            alert('onkeydown');
+                        });
+                        s.addEventListener("blur", function (e) {
+                            alert('onblur');
+                        });
+                        s.addEventListener("onkeyup", function (e) {
+                            alert('keyup');
                         });
                         div.appendChild(s);
                     }
@@ -181,6 +219,19 @@
                 }
             }
 
+            autocomplete.handleItemKeyPress = function (e) {
+                if (e) {
+
+                }
+            };
+
+            autocomplete.handleItemBlur = function (e) {
+                if (e) { }
+            };
+
+            autocomplete.handleItemCllick = function (e) {
+                if (e) { }
+            };
             autocomplete.getDataFromObject = function (currentObject, searchterm) {
                 const searchmode = this.settings.searchmode;
                 const isplainobject = typeof (currentObject) === 'string';
