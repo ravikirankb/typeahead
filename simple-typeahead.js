@@ -3,7 +3,15 @@
 
 
         function Typeahead(el, args) {
-            let autocomplete = this;
+            let ac = this;
+
+            ac.classes = {
+                selected_item: ".autocomplete-active",
+                suggestionsbox: ".autocomplete-items"
+            };
+
+            ac.topsuggestion = "";
+            ac.selectedIndex = 0;
 
             var settings = $.extend({
                 data: null,
@@ -20,7 +28,7 @@
                 isremoteoptionenabled: false,
                 orientation: 'bottom',
                 searchmode: 'begins',
-                highlightsearchkey: false
+                highlightsearchkey: true
             }, args);
 
             let utils = {
@@ -61,82 +69,121 @@
                 }
             };
 
-            autocomplete.initialize = function () {
-                autocomplete.element = el;
-                autocomplete.el = $(el);
-                autocomplete.settings = settings;
+            ac.initialize = function () {
+                ac.element = el;
+                ac.el = $(el);
+                ac.settings = settings;
 
-                autocomplete.el.val('');
-                autocomplete.el.attr("placeholder", autocomplete.settings.placeHolderText); // Set placeholder if any.
-                autocomplete.el.attr("autocomplete", "off");
-                autocomplete.initContainer();
-                autocomplete.initEvents();
+                ac.el.val('');
+                ac.el.attr("placeholder", ac.settings.placeHolderText); // Set placeholder if any.
+                ac.el.attr("autocomplete", "off");
+                ac.initContainer();
+                ac.initEvents();
             };
 
-            autocomplete.logError = function (message) {
+            ac.logError = function (message) {
                 console.error(message);
             }
 
             // init wrapper container on the input element.
-            autocomplete.initContainer = function () {
-                let el = autocomplete.el, parentContainer = utils.helper.getParentContainer(el.width);
+            ac.initContainer = function () {
+                let el = ac.el, parentContainer = utils.helper.getParentContainer(el.width);
                 el.wrap(parentContainer);
             };
 
-            autocomplete.initEvents = function () {
-                let control = autocomplete.el;
+            ac.initEvents = function () {
+                let control = ac.el;
 
                 control.on("focus.autocomplete", function (e) {
                     let text = this.value;
-                    autocomplete.handleInputChange(text);
+                    ac.handleInputChange(text);
                 });
 
                 control.on("input propertychange paste", function (e) {
                     let text = this.value;
-                    autocomplete.handleInputChange(text);
+                    ac.handleInputChange(text);
                 });
 
                 control.on("blur.autocomplete", function (e) {
 
                 });
 
-                control.on("keypress", function (e) {
+                control.on("keypress", ac.handleKeyPress);
 
-                });
-
-                control.on("keydown.autocomplete", function (e) {
-                    let __autocomplete_list, __active_element = $('.autocomplete-items div.autcomplete-active');
-                    if (e.keyCode == utils.keycodes.DOWN) {
-                        __autocomplete_list = $('.autocomplete-items div')[0];
-                    }
-                    if (e.keyCode == utils.keycodes.UP) {
-                        __autocomplete_list = $('.autocomplete-items div')[$('.autocomplete-items div').length - 1];
-                    }
-                    if (__autocomplete_list != undefined) {
-                        __autocomplete_list.setAttribute('class', 'autocomplete-active');
-                        __autocomplete_list.focus();
-                        $(__active_element).removeClass('autocomplete-active');
-                    }
-                });
+                control.on("keydown.autocomplete", ac.handleKeyPress);
             };
 
-            autocomplete.handleInputChange = function (text) {
-                if (text.length >= autocomplete.settings.minChars) {
-                    let data = autocomplete.getSuggestions();
-                    if (data)
-                        autocomplete.buildsuggestionslist(data, text);
-                    else
-                        autocomplete.showNoSuggestionsBox();
+            ac.handleKeyPress = function (e) {
+                if (e) {
+                    switch (e.which) {
+                        case utils.keycodes.UP:
+                            ac.handleKeyUp(e);
+                            break;
+                        case utils.keycodes.DOWN:
+                            ac.handleKeyDown(e);
+                            break;
+                        case utils.keycodes.TAB:
+                            break;
+                        case utils.keycodes.ENTER:
+                            break;
+                        case utils.keycodes.ESC:
+                            break;
+                    }
                 }
             };
 
-            autocomplete.showNoSuggestionsBox = function () {
-                let nosuggestionsdiv = utils.helper.getNoSuggestionsDiv(autocomplete.el.width, autocomplete.settings.nosuggestionsText);
-                let that = autocomplete.element;
+            ac.handleKeyUp = function (e) {
+
+            };
+
+            ac.handleKeyDown = function (e) {
+                let currentactive = $(ac.classes.selected_item);
+                let suggestioncontainer = $(ac.classes.suggestioncontainer);
+                if (currentactive.length > 0) {
+                    $(currentactive).remove(ac.classes.selected_item);
+                    ac.selectedIndex++;
+                    let setActive = $(suggestioncontainer).find('div').eq(ac.selectedIndex);
+                    $(setActive).addClass(ac.classes.selected_item);
+                }
+                else { // first item to be set - active 
+                    ac.selected_item = 1;
+                    $(suggestioncontainer).find('div').eq(ac.selectedIndex).addClass(ac.classes.selected_item);                    
+                }
+                // let __autocomplete_list, __active_element = $('.autocomplete-items div.autocomplete-active');
+                // if (e.keyCode == utils.keycodes.DOWN) {
+                //     __autocomplete_list = $('.autocomplete-items div')[0];
+                // }
+                // if (e.keyCode == utils.keycodes.UP) {
+                //     __autocomplete_list = $('.autocomplete-items div')[$('.autocomplete-items div').length - 1];
+                // }
+                // if (__autocomplete_list != undefined) {
+                //     __autocomplete_list.setAttribute('class', 'autocomplete-active');
+                //     __autocomplete_list.focus();
+                //     $(__active_element).removeClass('autocomplete-active');
+                // }
+            };
+
+            ac.handleTabPress = function (e) {
+
+            };
+
+            ac.handleInputChange = function (text) {
+                if (text.length >= ac.settings.minChars) {
+                    let data = ac.getSuggestions();
+                    if (data)
+                        ac.buildsuggestionslist(data, text);
+                    else
+                        ac.showNoSuggestionsBox();
+                }
+            };
+
+            ac.showNoSuggestionsBox = function () {
+                let nosuggestionsdiv = utils.helper.getNoSuggestionsDiv(ac.el.width, ac.settings.nosuggestionsText);
+                let that = ac.element;
                 that.parentNode.appendChild(nosuggestionsdiv);
             };
 
-            autocomplete.closeSuggestionsBox = function (elmnt) {
+            ac.closeSuggestionsBox = function (elmnt) {
                 var x = document.getElementsByClassName("autocomplete-items");
                 for (var i = 0; i < x.length; i++) {
                     if (elmnt != x[i]) {
@@ -149,12 +196,12 @@
                 }
             }
 
-            autocomplete.getSuggestions = function () {
-                let options = autocomplete.settings;
+            ac.getSuggestions = function () {
+                let options = ac.settings;
                 let element = options.element;
                 let dataSource = options.data;
                 if (dataSource == null || dataSource == undefined)
-                    autocomplete.logError("Source not defined");
+                    ac.logError("Source not defined");
 
 
                 if (Array.isArray(dataSource)) {
@@ -168,12 +215,12 @@
                 }
             }
 
-            autocomplete.buildsuggestionslist = function (data, searchterm) {
+            ac.buildsuggestionslist = function (data, searchterm) {
                 if (!data)
                     return;
 
-                autocomplete.closeSuggestionsBox();
-                let that = autocomplete.element, el = autocomplete.el;
+                ac.closeSuggestionsBox();
+                let that = ac.element, el = ac.el;
                 var div, s;
                 /*create a DIV element that will contain the items (values):*/
                 div = document.createElement("DIV");
@@ -194,45 +241,31 @@
                         s.innerHTML = innerHtml;
                         s.addEventListener("click", function (e) {
                             alert('click');
-                            autocomplete.settings.onSelected.call(e);
-                        });
-                        s.addEventListener("onenter", function (e) {
-                            alert('enter');
-                        });
-                        s.addEventListener("keypress", function (e) {
-                            alert('keypress');
-                        });
-                        s.addEventListener("keydown", function (e) {
-                            alert('onkeydown');
-                        });
-                        s.addEventListener("blur", function (e) {
-                            alert('onblur');
-                        });
-                        s.addEventListener("onkeyup", function (e) {
-                            alert('keyup');
+                            ac.settings.onSelected.call(e);
                         });
                         div.appendChild(s);
                     }
                 }
                 if (!isSuggestionFound) {
-                    autocomplete.showNoSuggestionsBox(el.width, autocomplete.settings.nosuggestionsText);
+                    ac.showNoSuggestionsBox(el.width, ac.settings.nosuggestionsText);
                 }
             }
 
-            autocomplete.handleItemKeyPress = function (e) {
+            ac.handleItemKeyPress = function (e) {
                 if (e) {
 
                 }
             };
 
-            autocomplete.handleItemBlur = function (e) {
+            ac.handleItemBlur = function (e) {
                 if (e) { }
             };
 
-            autocomplete.handleItemCllick = function (e) {
+            ac.handleItemCllick = function (e) {
                 if (e) { }
             };
-            autocomplete.getDataFromObject = function (currentObject, searchterm) {
+
+            ac.getDataFromObject = function (currentObject, searchterm) {
                 const searchmode = this.settings.searchmode;
                 const isplainobject = typeof (currentObject) === 'string';
                 let objecttoreturn = undefined;
@@ -249,7 +282,7 @@
                         let dataValue = currentObject[this.settings.displayExpr];
                         let keyValue = currentObject[this.settings.keyExpr];
                         if (dataValue == undefined)
-                            autocomplete.logError("The display expression was not found. Make sure the displayExpr key is correct");
+                            ac.logError("The display expression was not found. Make sure the displayExpr key is correct");
 
                         if (dataValue.substr(0, searchterm.length).toUpperCase() == searchterm.toUpperCase()) {
                             objecttoreturn = {
@@ -272,7 +305,7 @@
                         let dataValue = currentObject[this.settings.displayExpr];
                         let keyValue = currentObject[this.settings.keyExpr];
                         if (dataValue == undefined)
-                            autocomplete.logError("The display expression was not found. Make sure the displayExpr key is correct");
+                            ac.logError("The display expression was not found. Make sure the displayExpr key is correct");
 
                         if (dataValue.toUpperCase().indexOf(searchterm.toUpperCase()) > -1) {
                             objecttoreturn = {
@@ -286,7 +319,7 @@
                 return objecttoreturn;
             }
 
-            autocomplete.initialize();
+            ac.initialize();
 
         }
 
