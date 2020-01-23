@@ -5,12 +5,12 @@
         function Typeahead(el, args) {
             let ac = this;
 
-            ac.classes = {
-                selected_item: ".autocomplete-active",
-                suggestionsbox: ".autocomplete-items"
+            ac.selectors = {
+                selected_item: "autocomplete-active",
+                suggestionsbox: "autocomplete-items"
             };
 
-            ac.topsuggestion = "";
+            ac.topsuggestion = null;
             ac.selectedIndex = 0;
 
             var settings = $.extend({
@@ -117,10 +117,10 @@
                 if (e) {
                     switch (e.which) {
                         case utils.keycodes.UP:
-                            ac.handleKeyUp(e);
+                            ac.handleArrowUp(e);
                             break;
                         case utils.keycodes.DOWN:
-                            ac.handleKeyDown(e);
+                            ac.handleArrowDown(e);
                             break;
                         case utils.keycodes.TAB:
                             break;
@@ -132,35 +132,51 @@
                 }
             };
 
-            ac.handleKeyUp = function (e) {
-
+            ac.handleArrowUp = function (e) {
+                let currentactive = $('.' + ac.selectors.selected_item);
+                let length = $('.' + ac.selectors.suggestionsbox).find('div').length;
+                if ($(currentactive).length > 0) {
+                    if (ac.selectedIndex == 0) {
+                        ac.selectedIndex = length - 1;
+                    }
+                    else {
+                        ac.selectedIndex--;
+                    }
+                    ac.setActiveElement(ac.selectedIndex, currentactive);
+                }
+                else {
+                    ac.selectedIndex = length - 1;
+                    ac.setActiveElement(ac.selectedIndex, currentactive);
+                }
             };
 
-            ac.handleKeyDown = function (e) {
-                let currentactive = $(ac.classes.selected_item);
-                let suggestioncontainer = $(ac.classes.suggestioncontainer);
-                if (currentactive.length > 0) {
-                    $(currentactive).remove(ac.classes.selected_item);
-                    ac.selectedIndex++;
-                    let setActive = $(suggestioncontainer).find('div').eq(ac.selectedIndex);
-                    $(setActive).addClass(ac.classes.selected_item);
+            ac.handleArrowDown = function (e) {
+                let currentactive = $('.' + ac.selectors.selected_item);
+                let length = $('.' + ac.selectors.suggestionsbox).find('div').length;
+                if ($(currentactive).length > 0) {
+                    if (ac.selectedIndex == length - 1) {
+                        ac.selectedIndex = 0;
+                    }
+                    else {
+                        ac.selectedIndex++;
+                    }
+                    ac.setActiveElement(ac.selectedIndex, currentactive);
                 }
-                else { // first item to be set - active 
-                    ac.selected_item = 1;
-                    $(suggestioncontainer).find('div').eq(ac.selectedIndex).addClass(ac.classes.selected_item);                    
+                else {
+                    ac.selectedIndex = 0;
+                    ac.setActiveElement(ac.selectedIndex, currentactive);
                 }
-                // let __autocomplete_list, __active_element = $('.autocomplete-items div.autocomplete-active');
-                // if (e.keyCode == utils.keycodes.DOWN) {
-                //     __autocomplete_list = $('.autocomplete-items div')[0];
-                // }
-                // if (e.keyCode == utils.keycodes.UP) {
-                //     __autocomplete_list = $('.autocomplete-items div')[$('.autocomplete-items div').length - 1];
-                // }
-                // if (__autocomplete_list != undefined) {
-                //     __autocomplete_list.setAttribute('class', 'autocomplete-active');
-                //     __autocomplete_list.focus();
-                //     $(__active_element).removeClass('autocomplete-active');
-                // }
+            };
+
+            ac.setActiveElement = function (index, currentActiveEle) {
+                if (currentActiveEle && currentActiveEle.length > 0) {
+                    $(currentActiveEle).removeClass(ac.selectors.selected_item);
+                }
+
+                let suggestioncontainer = $('.' + ac.selectors.suggestionsbox);
+                let activeToSet = $(suggestioncontainer).find('div').eq(index);
+                $(activeToSet).addClass(ac.selectors.selected_item);
+                $(activeToSet).focus();
             };
 
             ac.handleTabPress = function (e) {
@@ -233,6 +249,9 @@
                 for (var i = 0; i < data.length; i++) {
                     let currentObj = this.getDataFromObject(data[i], searchterm);
                     if (currentObj != undefined) {
+                        if (ac.topsuggestion == null) {
+                            ac.topsuggestion = currentObj;
+                        }
                         isSuggestionFound = true;
                         s = document.createElement("DIV");
                         let innerHtml = "<strong " + (this.settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.displayObject.substr(0, searchterm.length) + "</strong>";
@@ -243,6 +262,16 @@
                             alert('click');
                             ac.settings.onSelected.call(e);
                         });
+                        s.addEventListener("keypress", function (e) {
+                            if (e.which == utils.keycodes.ENTER) {
+                                alert('enter');
+                                ac.settings.onSelected.call(e);
+                            }
+                            else {
+                                e.stopPropagation();
+                            }
+                        });
+                        ac.el.attr('placeholder', ac.topsuggestion.displayObject);
                         div.appendChild(s);
                     }
                 }
