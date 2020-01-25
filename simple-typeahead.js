@@ -11,19 +11,25 @@
             };
 
             ac.topsuggestion = null;
+            ac.filteredSuggestions = [];
             ac.selectedIndex = 0;
 
             var settings = $.extend({
                 data: null,
+                showhint: false,
+                tabselectionenabled: false,
                 onSelected: function (e) {
 
                 },
                 displayExpr: 'Name',
                 keyExpr: 'Id',
-                minSuggestions: 5,
+                minSuggestions: 10,
                 autoCompleteEnabled: false,
                 placeHolderText: '--Select--',
                 nosuggestionsText: '--No Suggestions--',
+                nosuggestionsTemplate: function (obj) {
+                    return '<div></div>';
+                },
                 minChars: 1,
                 isremoteoptionenabled: false,
                 orientation: 'bottom',
@@ -54,6 +60,13 @@
                             }
                             divP.appendChild(div);
                             return divP;
+                        },
+                        getHintInput: function (width) {
+                            let __hintinput = document.createElement("input");
+                            __hintinput.setAttribute("class", "autocomplete-hint");
+                            __hintinput.setAttribute("readonly", "readonly");
+                            __hintinput.style.width = width + 'px';
+                            return __hintinput;
                         }
                     }
                 })(),
@@ -89,6 +102,7 @@
             ac.initContainer = function () {
                 let el = ac.el, parentContainer = utils.helper.getParentContainer(el.width);
                 el.wrap(parentContainer);
+                $(parentContainer).prepend(utils.helper.getHintInput(el.width));
             };
 
             ac.initEvents = function () {
@@ -186,10 +200,13 @@
             ac.handleInputChange = function (text) {
                 if (text.length >= ac.settings.minChars) {
                     let data = ac.getSuggestions();
-                    if (data)
-                        ac.buildsuggestionslist(data, text);
-                    else
+                    if (data) {
+                        ac.filterSuggestions(data, text);
+                        ac.buildsuggestionslist(text);
+                    }
+                    else {
                         ac.showNoSuggestionsBox();
+                    }
                 }
             };
 
@@ -231,10 +248,21 @@
                 }
             }
 
-            ac.buildsuggestionslist = function (data, searchterm) {
-                if (!data)
-                    return;
+            ac.filterSuggestions = function (data, searchterm) {
+                ac.filteredSuggestions = [];
+                for (var i = 0; i < data.length; i++) {
+                    let currentObj = this.getDataFromObject(data[i], searchterm);
+                    if (currentObj != undefined) {
+                        ac.filteredSuggestions.push(currentObj);
+                    }
+                }
+            };
 
+            ac.buildsuggestionslist = function (searchterm) {
+                if (!ac.filteredSuggestions && ac.filteredSuggestions.length < 0) {
+                    ac.showNoSuggestionsBox(el.width, ac.settings.nosuggestionsText);
+                    return;
+                }
                 ac.closeSuggestionsBox();
                 let that = ac.element, el = ac.el;
                 var div, s;
@@ -245,14 +273,12 @@
                 /*append the DIV element as a child of the autocomplete container:*/
                 that.parentNode.appendChild(div);
 
-                let isSuggestionFound = false;
-                for (var i = 0; i < data.length; i++) {
-                    let currentObj = this.getDataFromObject(data[i], searchterm);
+                for (var i = 0; i < ac.settings.minSuggestions; i++) {
+                    let currentObj = ac.filteredSuggestions[i];
                     if (currentObj != undefined) {
                         if (ac.topsuggestion == null) {
                             ac.topsuggestion = currentObj;
                         }
-                        isSuggestionFound = true;
                         s = document.createElement("DIV");
                         let innerHtml = "<strong " + (this.settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.displayObject.substr(0, searchterm.length) + "</strong>";
                         innerHtml += currentObj.displayObject.substr(searchterm.length);
@@ -271,12 +297,8 @@
                                 e.stopPropagation();
                             }
                         });
-                        ac.el.attr('placeholder', ac.topsuggestion.displayObject);
                         div.appendChild(s);
                     }
-                }
-                if (!isSuggestionFound) {
-                    ac.showNoSuggestionsBox(el.width, ac.settings.nosuggestionsText);
                 }
             }
 

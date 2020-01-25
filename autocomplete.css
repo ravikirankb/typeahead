@@ -47,3 +47,11 @@ input[type=submit] {
   background-color: DodgerBlue !important;
   color: #ffffff;
 }
+.autocomplete-hint{
+  position: absolute;
+  top:0px;
+  left:0px;
+  border-color: transparent;
+  opacity: 1;
+  color:#999;
+}
