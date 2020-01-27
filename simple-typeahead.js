@@ -1,4 +1,6 @@
 (function ($) {
+    'use strict';
+
     $.fn.simple_typeahead = function (options) {
 
 
