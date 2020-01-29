@@ -35,7 +35,7 @@
                 minChars: 1,
                 isremoteoptionenabled: false,
                 orientation: 'bottom',
-                searchmode: 'begins',
+                searchmode: 'contains',
                 highlightsearchkey: true
             }, args);
 
@@ -261,8 +261,9 @@
             };
 
             ac.buildsuggestionslist = function (searchterm) {
-                if (!ac.filteredSuggestions && ac.filteredSuggestions.length < 0) {
-                    ac.showNoSuggestionsBox(el.width, ac.settings.nosuggestionsText);
+                let settings = ac.settings; suggestions = ac.filterSuggestions;
+                if (!suggestionsbox && suggestionsbox.length < 0) {
+                    ac.showNoSuggestionsBox(el.width, settings.nosuggestionsText);
                     return;
                 }
                 ac.closeSuggestionsBox();
@@ -275,25 +276,33 @@
                 /*append the DIV element as a child of the autocomplete container:*/
                 that.parentNode.appendChild(div);
 
-                for (var i = 0; i < ac.settings.minSuggestions; i++) {
-                    let currentObj = ac.filteredSuggestions[i];
+                for (var i = 0; i < settings.minSuggestions; i++) {
+                    let currentObj = suggestions[i];
                     if (currentObj != undefined) {
                         if (ac.topsuggestion == null) {
                             ac.topsuggestion = currentObj;
                         }
                         s = document.createElement("DIV");
-                        let innerHtml = "<strong " + (this.settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.displayObject.substr(0, searchterm.length) + "</strong>";
-                        innerHtml += currentObj.displayObject.substr(searchterm.length);
-                        innerHtml += "<input type='hidden' value='" + currentObj.displayObject + "'>";
-                        s.innerHTML = innerHtml;
+                        if (settings.searchmode == 'contains') {
+                            let text = currentObj.displayObject.toLowerCase();
+                            let searchkey = searchterm.toLowerCase();
+                            let startIndex = text.indexOf(searchkey);
+
+                        }
+                        else {
+                            let innerHtml = "<strong " + (settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.displayObject.substr(0, searchterm.length) + "</strong>";
+                            innerHtml += currentObj.displayObject.substr(searchterm.length);
+                            innerHtml += "<input type='hidden' value='" + currentObj.displayObject + "'>";
+                            s.innerHTML = innerHtml;
+                        }
                         s.addEventListener("click", function (e) {
                             alert('click');
-                            ac.settings.onSelected.call(e);
+                            settings.onSelected.call(e);
                         });
                         s.addEventListener("keypress", function (e) {
                             if (e.which == utils.keycodes.ENTER) {
                                 alert('enter');
-                                ac.settings.onSelected.call(e);
+                                settings.onSelected.call(e);
                             }
                             else {
                                 e.stopPropagation();
@@ -303,6 +312,23 @@
                     }
                 }
             }
+
+            ac.getContainsSuggestion = function (term, searchkey) {
+                const regex = '/' + searchkey + '/' + gi; let result, indices = [];
+                while ((result = regex.exec(term))) {
+                    indices.push(result.index);
+                }
+                let innerHtml = '', startIndex = 0;
+                for (let index = 0; index < indices.length; index++) {
+                    innerHtml += term.substr(startIndex, index[0]);                    
+                    innerHtml += "<strong " + (ac.settings.highlightsearchkey ? " class='hightlight-search-key' " :
+                        "") + ">" + term.substr(index[0], searchkey.length) + "</strong>";
+                    innerHtml += term.substr(searchterm.length);
+                    startIndex = 
+                }
+                innerHtml += "<input type='hidden' value='" + term + "'>";
+                return innerHtml;
+            };
 
             ac.handleItemKeyPress = function (e) {
                 if (e) {
