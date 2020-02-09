@@ -261,8 +261,8 @@
             };
 
             ac.buildsuggestionslist = function (searchterm) {
-                let settings = ac.settings; suggestions = ac.filterSuggestions;
-                if (!suggestionsbox && suggestionsbox.length < 0) {
+                let settings = ac.settings, suggestions = ac.filteredSuggestions;
+                if (!suggestions && suggestions.length < 0) {
                     ac.showNoSuggestionsBox(el.width, settings.nosuggestionsText);
                     return;
                 }
@@ -284,10 +284,8 @@
                         }
                         s = document.createElement("DIV");
                         if (settings.searchmode == 'contains') {
-                            let text = currentObj.displayObject.toLowerCase();
-                            let searchkey = searchterm.toLowerCase();
-                            let startIndex = text.indexOf(searchkey);
-
+                            let innerHTML = ac.getContainsSuggestion(currentObj.displayObject, searchterm);
+                            s.innerHTML = innerHTML;
                         }
                         else {
                             let innerHtml = "<strong " + (settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.displayObject.substr(0, searchterm.length) + "</strong>";
@@ -314,17 +312,18 @@
             }
 
             ac.getContainsSuggestion = function (term, searchkey) {
-                const regex = '/' + searchkey + '/' + gi; let result, indices = [];
+                let result, indices = [];
+                let regex = new RegExp(searchkey, 'gi');
                 while ((result = regex.exec(term))) {
                     indices.push(result.index);
                 }
                 let innerHtml = '', startIndex = 0;
                 for (let index = 0; index < indices.length; index++) {
-                    innerHtml += term.substr(startIndex, index[0]);                    
+                    innerHtml += term.substr(startIndex, indices[index]);
                     innerHtml += "<strong " + (ac.settings.highlightsearchkey ? " class='hightlight-search-key' " :
-                        "") + ">" + term.substr(index[0], searchkey.length) + "</strong>";
-                    innerHtml += term.substr(searchterm.length);
-                    startIndex = 
+                        "") + ">" + term.substr(indices[index], searchkey.length) + "</strong>";
+                    innerHtml += term.substr(indices[index] + searchkey.length, indices[index + 1] || term.length);
+                    startIndex = indices[0] + searchkey.length;
                 }
                 innerHtml += "<input type='hidden' value='" + term + "'>";
                 return innerHtml;
