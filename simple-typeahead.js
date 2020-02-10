@@ -319,11 +319,13 @@
                 }
                 let innerHtml = '', startIndex = 0;
                 for (let index = 0; index < indices.length; index++) {
-                    innerHtml += term.substr(startIndex, indices[index]);
+                    if (startIndex != indices[index]) {
+                        innerHtml += term.substr(startIndex, indices[index]);
+                    }
                     innerHtml += "<strong " + (ac.settings.highlightsearchkey ? " class='hightlight-search-key' " :
                         "") + ">" + term.substr(indices[index], searchkey.length) + "</strong>";
-                    innerHtml += term.substr(indices[index] + searchkey.length, indices[index + 1] || term.length);
-                    startIndex = indices[0] + searchkey.length;
+                    innerHtml += term.substr(indices[index] + searchkey.length, indices[index + 1] - 1 || term.length);
+                    startIndex = indices[index + 1];
                 }
                 innerHtml += "<input type='hidden' value='" + term + "'>";
                 return innerHtml;
