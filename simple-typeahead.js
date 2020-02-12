@@ -312,21 +312,9 @@
             }
 
             ac.getContainsSuggestion = function (term, searchkey) {
-                let result, indices = [];
-                let regex = new RegExp(searchkey, 'gi');
-                while ((result = regex.exec(term))) {
-                    indices.push(result.index);
-                }
-                let innerHtml = '', startIndex = 0;
-                for (let index = 0; index < indices.length; index++) {
-                    if (startIndex != indices[index]) {
-                        innerHtml += term.substr(startIndex, indices[index]);
-                    }
-                    innerHtml += "<strong " + (ac.settings.highlightsearchkey ? " class='hightlight-search-key' " :
-                        "") + ">" + term.substr(indices[index], searchkey.length) + "</strong>";
-                    innerHtml += term.substr(indices[index] + searchkey.length, indices[index + 1] - 1 || term.length);
-                    startIndex = indices[index + 1];
-                }
+                let innerHtml = term.replace(new RegExp(searchkey, 'gi'), function (match) {
+                    return '<strong>' + match + '</strong>';
+                });
                 innerHtml += "<input type='hidden' value='" + term + "'>";
                 return innerHtml;
             };
