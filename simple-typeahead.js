@@ -12,6 +12,16 @@
                 suggestionsbox: "autocomplete-items"
             };
 
+            ac.orientation = {
+                TOP: 'top',
+                BOTTOM: 'bottom'
+            };
+
+            ac.searchMode = {
+                BEGINS: 'begins',
+                CONTAINS: 'contains'
+            };
+
             ac.topsuggestion = null;
             ac.filteredSuggestions = [];
             ac.selectedIndex = 0;
@@ -34,7 +44,7 @@
                 },
                 minChars: 1,
                 isremoteoptionenabled: false,
-                orientation: 'bottom',
+                orientation: 'top',
                 searchmode: 'contains',
                 highlightsearchkey: true
             }, args);
@@ -205,11 +215,25 @@
                     if (data) {
                         ac.filterSuggestions(data, text);
                         ac.buildsuggestionslist(text);
+                        ac.showSuggestionsBox();
                     }
                     else {
                         ac.showNoSuggestionsBox();
                     }
                 }
+            };
+
+            ac.showSuggestionsBox = function () {
+                let suggestionsDiv = '.' + ac.selectors.suggestionsbox, control = ac.element;
+                let margin = {
+                    top: control.style.marginTop,
+                    bottom: control.style.marginBottom,
+                    right: control.style.marginRight,
+                    left: control.style.marginLeft
+                };
+                $(suggestionsDiv).css('margin-top', margin.top).css('margin-bottom', margin.bottom).css('margin-left', margin.left).css('margin-right', margin.right);
+                // $(suggestionsDiv).css('height','50px');
+                $(suggestionsDiv).show();
             };
 
             ac.showNoSuggestionsBox = function () {
@@ -262,7 +286,7 @@
 
             ac.buildsuggestionslist = function (searchterm) {
                 let settings = ac.settings, suggestions = ac.filteredSuggestions;
-                if (!suggestions && suggestions.length < 0) {
+                if (!suggestions && suggestions.length <= 0) {
                     ac.showNoSuggestionsBox(el.width, settings.nosuggestionsText);
                     return;
                 }
@@ -272,6 +296,7 @@
                 /*create a DIV element that will contain the items (values):*/
                 div = document.createElement("DIV");
                 div.setAttribute("id", that.id + "autocomplete-list");
+                div.style.display = "none"; // set initial display-none and set visible based on top/bottom orientation.
                 div.setAttribute("class", "autocomplete-items");
                 /*append the DIV element as a child of the autocomplete container:*/
                 that.parentNode.appendChild(div);
@@ -283,7 +308,7 @@
                             ac.topsuggestion = currentObj;
                         }
                         s = document.createElement("DIV");
-                        if (settings.searchmode == 'contains') {
+                        if (settings.searchmode == ac.searchMode.CONTAINS) {
                             let innerHTML = ac.getContainsSuggestion(currentObj.displayObject, searchterm);
                             s.innerHTML = innerHTML;
                         }
@@ -312,6 +337,9 @@
             }
 
             ac.getContainsSuggestion = function (term, searchkey) {
+                term = term
+                    .replace('&amp;', '&')
+                    .replace('&quot;', '"');
                 let innerHtml = term.replace(new RegExp(searchkey, 'gi'), function (match) {
                     return '<strong>' + match + '</strong>';
                 });
@@ -337,7 +365,7 @@
                 const searchmode = this.settings.searchmode;
                 const isplainobject = typeof (currentObject) === 'string';
                 let objecttoreturn = undefined;
-                if (searchmode == 'begins') {
+                if (searchmode == ac.searchMode.BEGINS) {
                     if (isplainobject) {
                         if (currentObject.substr(0, searchterm.length).toUpperCase() == searchterm.toUpperCase()) {
                             objecttoreturn = {
