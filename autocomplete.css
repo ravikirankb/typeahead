@@ -21,6 +21,7 @@ input[type=submit] {
   background-color: DodgerBlue;
   color: #fff;
 }
+
 .autocomplete-items {
   position: absolute;
   border: 1px solid #d4d4d4;
@@ -28,12 +29,15 @@ input[type=submit] {
   border-top: none;
   z-index: 99;
   /*position the autocomplete items to be the same width as the container:*/
-  /* top: 100%; */
-  bottom:100% !important;
-top:auto!important;
+  top: 100%;
+  /* bottom:100% !important;
+  top:auto!important; */
   left: 0;
-  right: 0;  
+  right: 0;
+  height:200px;
+  overflow:visible;
 }
+
 .autocomplete-items div {
   padding: 10px;
   cursor: pointer;

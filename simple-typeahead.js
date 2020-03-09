@@ -44,7 +44,7 @@
                 },
                 minChars: 1,
                 isremoteoptionenabled: false,
-                orientation: 'top',
+                orientation: 'bottom',
                 searchmode: 'contains',
                 highlightsearchkey: true
             }, args);
@@ -224,15 +224,28 @@
             };
 
             ac.showSuggestionsBox = function () {
-                let suggestionsDiv = '.' + ac.selectors.suggestionsbox, control = ac.element;
-                let margin = {
-                    top: control.style.marginTop,
-                    bottom: control.style.marginBottom,
+                let suggestionsDiv = '.' + ac.selectors.suggestionsbox, control = ac.element, orientation = ac.settings.orientation;
+                let left_right_margin = { // add same left, right margin as the input element.
                     right: control.style.marginRight,
                     left: control.style.marginLeft
                 };
-                $(suggestionsDiv).css('margin-top', margin.top).css('margin-bottom', margin.bottom).css('margin-left', margin.left).css('margin-right', margin.right);
-                // $(suggestionsDiv).css('height','50px');
+                $(suggestionsDiv).css(left_right_margin);
+                // calculate the top and/or bottom margin.
+                let window_height = window.outerHeight;
+                let window_current_height = window.innerHeight;
+                let off_set = ac.el.offset();
+                let a_height = window_height - off_set.top;
+                let css = {};
+                if (ac.orientation.TOP == orientation) {
+                    if (off_set.top >= 100) {
+                        css.margin_bottom = -(off_set.top - 60);
+                        css.border_top = '1px solid #d4d4d4';
+                        // css.height = 
+                    }
+                }
+
+                $(suggestionsDiv).css(css);
+
                 $(suggestionsDiv).show();
             };
 
