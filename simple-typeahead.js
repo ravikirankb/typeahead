@@ -44,7 +44,7 @@
                 },
                 minChars: 1,
                 isremoteoptionenabled: false,
-                orientation: 'bottom',
+                orientation: 'top',
                 searchmode: 'contains',
                 highlightsearchkey: true
             }, args);
@@ -237,11 +237,11 @@
                 let a_height = window_height - off_set.top;
                 let css = {};
                 if (ac.orientation.TOP == orientation) {
-                    if (off_set.top >= 100) {
-                        css.margin_bottom = -(off_set.top - 60);
-                        css.border_top = '1px solid #d4d4d4';
-                        // css.height = 
-                    }
+                    //if (off_set.top >= 100) {
+                    css.marginBottom = '-' + (off_set.top - 60) + 'px';
+                    css.borderTop = '1px solid #d4d4d4';
+                    css.top = '';
+                    //}
                 }
 
                 $(suggestionsDiv).css(css);
