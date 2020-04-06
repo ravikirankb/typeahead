@@ -35,7 +35,7 @@
                 },
                 displayExpr: 'Name',
                 keyExpr: 'Id',
-                minSuggestions: 10,
+                minSuggestions: 1000,
                 autoCompleteEnabled: false,
                 placeHolderText: '--Select--',
                 nosuggestionsText: '--No Suggestions--',
@@ -174,6 +174,7 @@
                     ac.selectedIndex = length - 1;
                     ac.setActiveElement(ac.selectedIndex, currentactive);
                 }
+                ac.scrollToCurrent(ac.selectedIndex);
             };
 
             ac.handleArrowDown = function (e) {
@@ -192,6 +193,7 @@
                     ac.selectedIndex = 0;
                     ac.setActiveElement(ac.selectedIndex, currentactive);
                 }
+                ac.scrollToCurrent(ac.selectedIndex);
             };
 
             ac.setActiveElement = function (index, currentActiveEle) {
@@ -205,21 +207,42 @@
                 $(activeToSet).focus();
             };
 
+            ac.scrollToCurrent = function (index) {
+                let suggestioncontainer = $('.' + ac.selectors.suggestionsbox).get(0);
+                let element = $(suggestioncontainer).find('div').eq(index).get(0);
+
+                if (!element) {
+                    return;
+                }
+
+                // const elementRect = element.getBoundingClientRect();
+                // const absoluteElementTop = elementRect.top + window.pageYOffset;
+                // console.log(window.pageYOffset);
+                // const middle = absoluteElementTop - (window.innerHeight / 2);
+                // $(suggestioncontainer).scrollTop(middle);
+
+                // let currentElement = $(element).get(0);
+                element.scrollIntoView(false);
+            };
+
             ac.handleTabPress = function (e) {
 
             };
 
             ac.handleInputChange = function (text) {
                 if (text.length >= ac.settings.minChars) {
-                    let data = ac.getSuggestions();
-                    if (data) {
-                        ac.filterSuggestions(data, text);
-                        ac.buildsuggestionslist(text);
-                        ac.showSuggestionsBox();
-                    }
-                    else {
-                        ac.showNoSuggestionsBox();
-                    }
+                    // we make use of the call back function so that the ajax response callback is received
+                    // from the callback function.
+                    ac.getSuggestions(function (result) {
+                        if (result) {
+                            ac.filterSuggestions(result, text);
+                            ac.buildsuggestionslist(text);
+                            ac.showSuggestionsBox();
+                        }
+                        else {
+                            ac.showNoSuggestionsBox();
+                        }
+                    });
                 }
             };
 
@@ -232,20 +255,17 @@
                 $(suggestionsDiv).css(left_right_margin);
                 // calculate the top and/or bottom margin.
                 let window_height = window.outerHeight;
-                let window_current_height = window.innerHeight;
                 let off_set = ac.el.offset();
                 let a_height = window_height - off_set.top;
                 let css = {};
-                if (ac.orientation.TOP == orientation) {
-                    //if (off_set.top >= 100) {
-                    css.marginBottom = '-' + (off_set.top - 60) + 'px';
-                    css.borderTop = '1px solid #d4d4d4';
-                    css.top = '';
-                    //}
-                }
+                // if (ac.orientation.TOP == orientation) {
+                //     css.marginBottom = '-' + (off_set.top - 60) + 'px';
+                //     css.bottom = '100%'
+                //     css.borderTop = '1px solid #d4d4d4';
+                //     css.top = 'auto';
+                // }
 
-                $(suggestionsDiv).css(css);
-
+                // $(suggestionsDiv).css(css);
                 $(suggestionsDiv).show();
             };
 
@@ -268,22 +288,25 @@
                 }
             }
 
-            ac.getSuggestions = function () {
+            ac.getSuggestions = function (callBack) {
+                let that = ac;
                 let options = ac.settings;
-                let element = options.element;
+                let element = ac.element;
                 let dataSource = options.data;
                 if (dataSource == null || dataSource == undefined)
                     ac.logError("Source not defined");
 
 
                 if (Array.isArray(dataSource)) {
-                    return dataSource;
+                    callBack(dataSource);
                 }
 
                 if (typeof dataSource == "function") {
-                    dataSource(element.value, function (result) {
-                        return result;
-                    });
+                    debugger;
+                    // use the ajax done function to set the result callback.
+                    let ajax = dataSource.call(element.value,function(result){
+                        callBack(result);
+                    });                   
                 }
             }
 

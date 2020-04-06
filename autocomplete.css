@@ -29,9 +29,9 @@ input[type=submit] {
   border-top: none;
   z-index: 99;
   /*position the autocomplete items to be the same width as the container:*/
-  /* top: 100%; */
-  bottom:100% !important;
-  top:auto!important;
+  top: 100%;
+  /* bottom:100% !important;
+  top:auto!important; */
   left: 0;
   right: 0;
   max-height:300px;
