@@ -22,6 +22,8 @@
                 CONTAINS: 'contains'
             };
 
+            ac.minspacecriteria = 125;
+
             ac.topsuggestion = null;
             ac.filteredSuggestions = [];
             ac.selectedIndex = 0;
@@ -46,7 +48,8 @@
                 isremoteoptionenabled: false,
                 orientation: 'top',
                 searchmode: 'contains',
-                highlightsearchkey: true
+                highlightsearchkey: true,
+                autoalignheight: true
             }, args);
 
             let utils = {
@@ -134,7 +137,9 @@
 
                 });
 
-                control.on("keypress", ac.handleKeyPress);
+                control.on("keypress.autocomplete", ac.handleKeyPress);
+
+                control.on("keyup.autocomplete", ac.handleKeyPress);
 
                 control.on("keydown.autocomplete", ac.handleKeyPress);
             };
@@ -151,6 +156,7 @@
                         case utils.keycodes.TAB:
                             break;
                         case utils.keycodes.ENTER:
+                            ac.handleEnterKeyPress(e);
                             break;
                         case utils.keycodes.ESC:
                             break;
@@ -158,7 +164,12 @@
                 }
             };
 
+            ac.handleEnterKeyPress = function (e) {
+
+            };
+
             ac.handleArrowUp = function (e) {
+                e.target.selectionEnd = ac.el.val().length;
                 let currentactive = $('.' + ac.selectors.selected_item);
                 let length = $('.' + ac.selectors.suggestionsbox).find('div').length;
                 if ($(currentactive).length > 0) {
@@ -174,6 +185,9 @@
                     ac.selectedIndex = length - 1;
                     ac.setActiveElement(ac.selectedIndex, currentactive);
                 }
+                // set value of the input box to the current active element text
+                currentactive = $('.' + ac.selectors.selected_item);
+                ac.el.val($(currentactive).find("input:hidden").val());
                 ac.scrollToCurrent(ac.selectedIndex);
             };
 
@@ -193,6 +207,9 @@
                     ac.selectedIndex = 0;
                     ac.setActiveElement(ac.selectedIndex, currentactive);
                 }
+                // set value of the input box to the current active element text
+                currentactive = $('.' + ac.selectors.selected_item);
+                ac.el.val($(currentactive).find("input:hidden").val());
                 ac.scrollToCurrent(ac.selectedIndex);
             };
 
@@ -215,14 +232,12 @@
                     return;
                 }
 
-                // const elementRect = element.getBoundingClientRect();
-                // const absoluteElementTop = elementRect.top + window.pageYOffset;
-                // console.log(window.pageYOffset);
-                // const middle = absoluteElementTop - (window.innerHeight / 2);
-                // $(suggestioncontainer).scrollTop(middle);
+                const absoluteElementTop = element.offsetTop + (element.clientHeight / 2);
+                const middle = absoluteElementTop - (suggestioncontainer.clientHeight / 2);
+                suggestioncontainer.scrollTo(0, middle);
 
-                // let currentElement = $(element).get(0);
-                element.scrollIntoView(false);
+                // // let currentElement = $(element).get(0);
+                // element.scrollIntoView({ block: "center" });
             };
 
             ac.handleTabPress = function (e) {
@@ -248,24 +263,59 @@
 
             ac.showSuggestionsBox = function () {
                 let suggestionsDiv = '.' + ac.selectors.suggestionsbox, control = ac.element, orientation = ac.settings.orientation;
+                let autoalignheight = ac.settings.autoalignheight;
                 let left_right_margin = { // add same left, right margin as the input element.
                     right: control.style.marginRight,
                     left: control.style.marginLeft
                 };
                 $(suggestionsDiv).css(left_right_margin);
-                // calculate the top and/or bottom margin.
-                let window_height = window.outerHeight;
-                let off_set = ac.el.offset();
-                let a_height = window_height - off_set.top;
-                let css = {};
-                // if (ac.orientation.TOP == orientation) {
-                //     css.marginBottom = '-' + (off_set.top - 60) + 'px';
-                //     css.bottom = '100%'
-                //     css.borderTop = '1px solid #d4d4d4';
-                //     css.top = 'auto';
-                // }
 
-                // $(suggestionsDiv).css(css);
+                // calculate the top and/or bottom margin.                
+                let off_set = ac.el.offset();
+                var bottom = off_set.top;//+ (ac.el.height() * 2);
+                var bottomDistance = $(document).height() - bottom;
+                let el_dim = {
+                    topDistance: off_set.top,
+                    bottomDistance: bottomDistance
+                };
+
+                let css = {};
+
+                let containerHeight = $(suggestionsDiv).outerHeight();
+                const control_margin = parseInt(ac.el.css('margin-top'));
+
+                console.log(containerHeight);
+                let isBottomDistanceAvailable = Math.max(el_dim.bottomDistance, ac.minspacecriteria) == el_dim.bottomDistance ? true : false;
+                let isTopDistanceAvailable = Math.max(el_dim.topDistance, ac.minspacecriteria) == el_dim.topDistance ? true : false;
+
+                if (autoalignheight) {
+                    if ((ac.orientation.TOP == orientation && isTopDistanceAvailable) || !isBottomDistanceAvailable) {
+                        css.borderTop = '1px solid #d4d4d4';
+                        const containerOverflow = containerHeight > el_dim.topDistance;
+                        if (containerOverflow) {
+                            css.maxHeight = Math.ceil(el_dim.topDistance - 10) + "px";
+                            $(suggestionsDiv).css(css);
+                            $(suggestionsDiv).show();
+                            containerHeight = $(suggestionsDiv).outerHeight();
+                            $(suggestionsDiv).hide();
+                            css.top = control_margin - containerHeight + "px";
+                        }
+                        else {
+                            css.top = control_margin - containerHeight + "px";
+                        }
+                    }
+                    else {
+                        css.maxHeight = Math.floor((el_dim.bottomDistance - 40) / 10) * 10 + "px";
+                    }
+                }
+                else {
+                    if ((ac.orientation.TOP == orientation && isTopDistanceAvailable) || !isBottomDistanceAvailable) {
+                        css.borderTop = "1px solid #d4d4d4";
+                        css.top = control_margin - containerHeight + "px";
+                    }
+                }
+
+                $(suggestionsDiv).css(css);
                 $(suggestionsDiv).show();
             };
 
@@ -304,9 +354,9 @@
                 if (typeof dataSource == "function") {
                     debugger;
                     // use the ajax done function to set the result callback.
-                    let ajax = dataSource.call(element.value,function(result){
+                    let ajax = dataSource.call(element.value, function (result) {
                         callBack(result);
-                    });                   
+                    });
                 }
             }
 
@@ -344,14 +394,15 @@
                             ac.topsuggestion = currentObj;
                         }
                         s = document.createElement("DIV");
+                        s.setAttribute("data-obj", currentObj);
                         if (settings.searchmode == ac.searchMode.CONTAINS) {
-                            let innerHTML = ac.getContainsSuggestion(currentObj.displayObject, searchterm);
+                            let innerHTML = ac.getContainsSuggestion(currentObj.key.displayObject, searchterm);
                             s.innerHTML = innerHTML;
                         }
                         else {
-                            let innerHtml = "<strong " + (settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.displayObject.substr(0, searchterm.length) + "</strong>";
-                            innerHtml += currentObj.displayObject.substr(searchterm.length);
-                            innerHtml += "<input type='hidden' value='" + currentObj.displayObject + "'>";
+                            let innerHtml = "<strong " + (settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.handleEnterKeyPress.displayObject.substr(0, searchterm.length) + "</strong>";
+                            innerHtml += currentObj.key.displayObject.substr(searchterm.length);
+                            innerHtml += "<input type='hidden' value='" + currentObj.key.displayObject + "'>";
                             s.innerHTML = innerHtml;
                         }
                         s.addEventListener("click", function (e) {
@@ -400,11 +451,12 @@
             ac.getDataFromObject = function (currentObject, searchterm) {
                 const searchmode = this.settings.searchmode;
                 const isplainobject = typeof (currentObject) === 'string';
-                let objecttoreturn = undefined;
+                let objecttoreturn = {};
                 if (searchmode == ac.searchMode.BEGINS) {
                     if (isplainobject) {
                         if (currentObject.substr(0, searchterm.length).toUpperCase() == searchterm.toUpperCase()) {
-                            objecttoreturn = {
+                            objecttoreturn.obj = currentObject;
+                            objecttoreturn.key = {
                                 displayObject: currentObject,
                                 keyObject: currentObject
                             }
@@ -417,7 +469,8 @@
                             ac.logError("The display expression was not found. Make sure the displayExpr key is correct");
 
                         if (dataValue.substr(0, searchterm.length).toUpperCase() == searchterm.toUpperCase()) {
-                            objecttoreturn = {
+                            objecttoreturn.data = currentObject;
+                            objecttoreturn.key = {
                                 displayObject: dataValue,
                                 keyObject: keyValue
                             }
@@ -427,7 +480,8 @@
                 else {
                     if (isplainobject) {
                         if (currentObject.toUpperCase().indexOf(searchterm.toUpperCase()) > -1) {
-                            objecttoreturn = {
+                            objecttoreturn.obj = currentObject;
+                            objecttoreturn.key = {
                                 displayObject: currentObject,
                                 keyObject: currentObject
                             }
@@ -440,7 +494,8 @@
                             ac.logError("The display expression was not found. Make sure the displayExpr key is correct");
 
                         if (dataValue.toUpperCase().indexOf(searchterm.toUpperCase()) > -1) {
-                            objecttoreturn = {
+                            objecttoreturn.data = currentObject;
+                            objecttoreturn.key = {
                                 displayObject: dataValue,
                                 keyObject: keyValue
                             }
