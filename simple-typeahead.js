@@ -364,7 +364,7 @@
                 ac.filteredSuggestions = [];
                 for (var i = 0; i < data.length; i++) {
                     let currentObj = this.getDataFromObject(data[i], searchterm);
-                    if (currentObj != undefined) {
+                    if (currentObj != undefined && !jQuery.isEmptyObject(currentObj)) {
                         ac.filteredSuggestions.push(currentObj);
                     }
                 }
