@@ -9,7 +9,9 @@
 
             ac.selectors = {
                 selected_item: "autocomplete-active",
-                suggestionsbox: "autocomplete-items"
+                suggestionsbox: "autocomplete-items",
+                autcomplete_container: "autocomplete",
+                autocomplete_hint: "autocomplete-hint"
             };
 
             ac.orientation = {
@@ -30,8 +32,8 @@
 
             var settings = $.extend({
                 data: null,
-                showhint: false,
-                tabselectionenabled: false,
+                showHint: true,
+                tabselectionenabled: true,
                 onSelected: function (e) {
 
                 },
@@ -117,7 +119,16 @@
             ac.initContainer = function () {
                 let el = ac.el, parentContainer = utils.helper.getParentContainer(el.width);
                 el.wrap(parentContainer);
-                $(parentContainer).prepend(utils.helper.getHintInput(el.width));
+                ac.handleHintBox();
+            };
+
+            ac.handleHintBox = function () {
+                let settings = ac.settings, el = ac.el, parentContainer = "." + ac.selectors.autcomplete_container;
+                if (settings.showHint) {
+                    let hint = utils.helper.getHintInput(parseInt(el.css('width')));
+                    hint.style.marginTop = el.css('margin-top');
+                    $(parentContainer).prepend(hint);
+                }
             };
 
             ac.initEvents = function () {
@@ -130,6 +141,9 @@
 
                 control.on("input propertychange paste", function (e) {
                     let text = this.value;
+                    if (text.length == 0) {
+                        ac.clearHint();
+                    }
                     ac.handleInputChange(text);
                 });
 
@@ -154,6 +168,7 @@
                             ac.handleArrowDown(e);
                             break;
                         case utils.keycodes.TAB:
+                            ac.handleTabPress(e);
                             break;
                         case utils.keycodes.ENTER:
                             ac.handleEnterKeyPress(e);
@@ -165,7 +180,15 @@
             };
 
             ac.handleEnterKeyPress = function (e) {
-
+                if (e) {
+                    let activeElement = $("." + ac.selectors.selected_item), settings = ac.settings;
+                    if (activeElement.length > 0) {
+                        let data = JSON.parse(activeElement.attr("data-obj"));
+                        e.data = data;
+                        settings.onSelected.call(this, e, data.obj);
+                    }
+                    ac.closeSuggestionsBox();
+                }
             };
 
             ac.handleArrowUp = function (e) {
@@ -241,7 +264,16 @@
             };
 
             ac.handleTabPress = function (e) {
-
+                let settings = ac.settings, topsuggestion = ac.filteredSuggestions[0], el = ac.el;
+                ac.clearHint();
+                if (settings.tabselectionenabled === true) {
+                    if (topsuggestion) {
+                        el.val(topsuggestion.key.displayObject);
+                        e.data = topsuggestion.obj;
+                        settings.onSelected.call(this, e, topsuggestion.obj);
+                    }
+                    ac.closeSuggestionsBox();
+                }
             };
 
             ac.handleInputChange = function (text) {
@@ -249,10 +281,11 @@
                     // we make use of the call back function so that the ajax response callback is received
                     // from the callback function.
                     ac.getSuggestions(function (result) {
-                        if (result) {
+                        if (result && result.length > 0) {
                             ac.filterSuggestions(result, text);
                             ac.buildsuggestionslist(text);
                             ac.showSuggestionsBox();
+                            ac.showHint();
                         }
                         else {
                             ac.showNoSuggestionsBox();
@@ -260,6 +293,43 @@
                     });
                 }
             };
+
+            ac.showHint = function () {
+                let settings = ac.settings, el = ac.el;
+                if (settings.showHint) {
+                    ac.setTopSuggestion();
+
+                    if (ac.topsuggestion) {
+                        let value = ac.topsuggestion.key.displayObject;
+                        let hint = value.replace(new RegExp(el.val(), 'gi'), el.val());
+                        ac.setHint(hint);
+                    }
+                    else {
+                        ac.clearHint();
+                    }
+                }
+            }
+
+            ac.setHint = function (value) {
+                $("." + ac.selectors.autocomplete_hint).val(value);
+            }
+
+            ac.clearHint = function () {
+                $("." + ac.selectors.autocomplete_hint).val("");
+            }
+
+            ac.setTopSuggestion = function () {
+                let filteredSuggestions = ac.filteredSuggestions;
+                if (filteredSuggestions && filteredSuggestions.length > 0) {
+                    let topsuggestion = filteredSuggestions[0], val = ac.el.val(), currentVal = topsuggestion.key.displayObject;
+
+                    if (currentVal.toLowerCase().indexOf(val.toLowerCase()) == 0) {
+                        ac.topsuggestion = topsuggestion;
+                        return;
+                    }
+                }
+                ac.topsuggestion = null;
+            }
 
             ac.showSuggestionsBox = function () {
                 let suggestionsDiv = '.' + ac.selectors.suggestionsbox, control = ac.element, orientation = ac.settings.orientation;
@@ -390,11 +460,8 @@
                 for (var i = 0; i < settings.minSuggestions; i++) {
                     let currentObj = suggestions[i];
                     if (currentObj != undefined) {
-                        if (ac.topsuggestion == null) {
-                            ac.topsuggestion = currentObj;
-                        }
                         s = document.createElement("DIV");
-                        s.setAttribute("data-obj", currentObj);
+                        s.setAttribute("data-obj", JSON.stringify(currentObj));
                         if (settings.searchmode == ac.searchMode.CONTAINS) {
                             let innerHTML = ac.getContainsSuggestion(currentObj.key.displayObject, searchterm);
                             s.innerHTML = innerHTML;
@@ -406,17 +473,29 @@
                             s.innerHTML = innerHtml;
                         }
                         s.addEventListener("click", function (e) {
-                            alert('click');
-                            settings.onSelected.call(e);
+                            const data = JSON.parse(this.getAttribute("data-obj"));
+                            e.data = data.obj;
+                            ac.el.val(data.key.displayObject);
+                            settings.onSelected.call(this, e);
+                            ac.closeSuggestionsBox();
                         });
                         s.addEventListener("keypress", function (e) {
                             if (e.which == utils.keycodes.ENTER) {
-                                alert('enter');
-                                settings.onSelected.call(e);
+                                const data = JSON.parse(this.getAttribute("data-obj"));
+                                e.data = data.obj;
+                                ac.el.val(data.key.displayObject);
+                                settings.onSelected.call(this, e);
+                                ac.closeSuggestionsBox();
                             }
                             else {
                                 e.stopPropagation();
                             }
+                        });
+                        s.addEventListener("mouseover", function (e) {
+                            $(this).addClass(ac.selectors.selected_item);
+                        });
+                        s.addEventListener("mouseout", function (e) {
+                            $(this).removeClass(ac.selectors.selected_item);
                         });
                         div.appendChild(s);
                     }

@@ -8,13 +8,14 @@ body {
   display: inline-block;
 }
 input {
-  border: 1px solid transparent;
-  background-color: #f1f1f1;
+  border: 1.5px solid #ccc;
+  background-color: rgba(0, 0, 0, 0);
   padding: 10px;
-  font-size: 16px;
+  font-size: 18px;
+  position: relative;
 }
 input[type=text] {
-  background-color: #f1f1f1;
+  background-color: rgba(0, 0, 0, 0);
   width: 100%;
 }
 input[type=submit] {
@@ -57,9 +58,11 @@ input[type=submit] {
 }
 .autocomplete-hint{
   position: absolute;
-  top:0px;
-  left:0px;
+  top: 0px;
+  left: 0px;
   border-color: transparent;
-  opacity: 1;
+  box-shadow: none;
+  opacity: .5;
   color:#999;
+  background: none 0% 0% / auto repeat scroll padding-box border-box rgb(255, 255, 255)
 }
