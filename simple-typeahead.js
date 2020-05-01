@@ -283,6 +283,13 @@
                     ac.getSuggestions(function (result) {
                         if (result && result.length > 0) {
                             ac.filterSuggestions(result, text);
+
+                            if (ac.filteredSuggestions.length <= 0) {
+                                ac.closeSuggestionsBox();
+                                ac.showNoSuggestionsBox();
+                                return;
+                            }
+
                             ac.buildsuggestionslist(text);
                             ac.showSuggestionsBox();
                             ac.showHint();
@@ -354,7 +361,6 @@
                 let containerHeight = $(suggestionsDiv).outerHeight();
                 const control_margin = parseInt(ac.el.css('margin-top'));
 
-                console.log(containerHeight);
                 let isBottomDistanceAvailable = Math.max(el_dim.bottomDistance, ac.minspacecriteria) == el_dim.bottomDistance ? true : false;
                 let isTopDistanceAvailable = Math.max(el_dim.topDistance, ac.minspacecriteria) == el_dim.topDistance ? true : false;
 
@@ -373,10 +379,7 @@
                         else {
                             css.top = control_margin - containerHeight + "px";
                         }
-                    }
-                    else {
-                        css.maxHeight = Math.floor((el_dim.bottomDistance - 40) / 10) * 10 + "px";
-                    }
+                    }                    
                 }
                 else {
                     if ((ac.orientation.TOP == orientation && isTopDistanceAvailable) || !isBottomDistanceAvailable) {
