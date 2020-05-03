@@ -1,3 +1,5 @@
+
+
 (function ($) {
     'use strict';
 
@@ -29,6 +31,7 @@
             ac.topsuggestion = null;
             ac.filteredSuggestions = [];
             ac.selectedIndex = 0;
+            ac.cachestore = {};
 
             var settings = $.extend({
                 data: null,
@@ -43,15 +46,15 @@
                 autoCompleteEnabled: false,
                 placeHolderText: '--Select--',
                 nosuggestionsText: '--No Suggestions--',
-                nosuggestionsTemplate: function (obj) {
-                    return '<div></div>';
-                },
+                nosuggestionsTemplate: null,
+                itemTemplate: null,
                 minChars: 1,
                 isremoteoptionenabled: false,
                 orientation: 'top',
                 searchmode: 'contains',
                 highlightsearchkey: true,
-                autoalignheight: true
+                autoalignheight: true,
+                cacheEnabled: false
             }, args);
 
             let utils = {
@@ -69,11 +72,13 @@
                             divP.style.width = width + 'px';
                             let div = document.createElement('div');
                             div.style.fontStyle = "italic";
-                            if (nosuggestionstext.substr(0) == '-') {
-                                div.innerHTML = nosuggestionstext;
-                            }
-                            else {
-                                div.innerHTML = "--" + nosuggestionstext + "--";
+                            if (nosuggestionstext) {
+                                if (nosuggestionstext.substr(0) == '-') {
+                                    div.innerHTML = nosuggestionstext;
+                                }
+                                else {
+                                    div.innerHTML = "--" + nosuggestionstext + "--";
+                                }
                             }
                             divP.appendChild(div);
                             return divP;
@@ -148,21 +153,21 @@
                 });
 
                 control.on("blur.autocomplete", function (e) {
-
+                    ac.closeSuggestionsBox();
                 });
 
                 control.on("keypress.autocomplete", ac.handleKeyPress);
-
-                control.on("keyup.autocomplete", ac.handleKeyPress);
 
                 control.on("keydown.autocomplete", ac.handleKeyPress);
             };
 
             ac.handleKeyPress = function (e) {
                 if (e) {
+                    e.stopPropagation();
                     switch (e.which) {
                         case utils.keycodes.UP:
                             ac.handleArrowUp(e);
+                            return false;
                             break;
                         case utils.keycodes.DOWN:
                             ac.handleArrowDown(e);
@@ -175,6 +180,8 @@
                             break;
                         case utils.keycodes.ESC:
                             break;
+                        default:
+                            break;
                     }
                 }
             };
@@ -183,9 +190,9 @@
                 if (e) {
                     let activeElement = $("." + ac.selectors.selected_item), settings = ac.settings;
                     if (activeElement.length > 0) {
-                        let data = JSON.parse(activeElement.attr("data-obj"));
+                        let data = JSON.parse(activeElement.data("data-obj"));
                         e.data = data;
-                        settings.onSelected.call(this, e, data.obj);
+                        settings.onSelected.call(this, e, data.data);
                     }
                     ac.closeSuggestionsBox();
                 }
@@ -193,46 +200,46 @@
 
             ac.handleArrowUp = function (e) {
                 e.target.selectionEnd = ac.el.val().length;
+                ac.clearHint();
                 let currentactive = $('.' + ac.selectors.selected_item);
-                let length = $('.' + ac.selectors.suggestionsbox).find('div').length;
-                if ($(currentactive).length > 0) {
+                let length = $('.' + ac.selectors.suggestionsbox).find('> div').length;
+                if (currentactive.length > 0) {
                     if (ac.selectedIndex == 0) {
                         ac.selectedIndex = length - 1;
                     }
                     else {
                         ac.selectedIndex--;
                     }
-                    ac.setActiveElement(ac.selectedIndex, currentactive);
                 }
                 else {
                     ac.selectedIndex = length - 1;
-                    ac.setActiveElement(ac.selectedIndex, currentactive);
                 }
+                ac.setActiveElement(ac.selectedIndex, currentactive);
                 // set value of the input box to the current active element text
                 currentactive = $('.' + ac.selectors.selected_item);
-                ac.el.val($(currentactive).find("input:hidden").val());
+                ac.el.val(currentactive.find("input:hidden").val());
                 ac.scrollToCurrent(ac.selectedIndex);
             };
 
             ac.handleArrowDown = function (e) {
+                ac.clearHint();
                 let currentactive = $('.' + ac.selectors.selected_item);
-                let length = $('.' + ac.selectors.suggestionsbox).find('div').length;
-                if ($(currentactive).length > 0) {
+                let length = $('.' + ac.selectors.suggestionsbox).find('> div').length;
+                if (currentactive.length > 0) {
                     if (ac.selectedIndex == length - 1) {
                         ac.selectedIndex = 0;
                     }
                     else {
                         ac.selectedIndex++;
                     }
-                    ac.setActiveElement(ac.selectedIndex, currentactive);
                 }
                 else {
                     ac.selectedIndex = 0;
-                    ac.setActiveElement(ac.selectedIndex, currentactive);
                 }
+                ac.setActiveElement(ac.selectedIndex, currentactive);
                 // set value of the input box to the current active element text
                 currentactive = $('.' + ac.selectors.selected_item);
-                ac.el.val($(currentactive).find("input:hidden").val());
+                ac.el.val(currentactive.find("input:hidden").val());
                 ac.scrollToCurrent(ac.selectedIndex);
             };
 
@@ -242,14 +249,14 @@
                 }
 
                 let suggestioncontainer = $('.' + ac.selectors.suggestionsbox);
-                let activeToSet = $(suggestioncontainer).find('div').eq(index);
+                let activeToSet = $(suggestioncontainer).find('> div').eq(index);
                 $(activeToSet).addClass(ac.selectors.selected_item);
                 $(activeToSet).focus();
             };
 
             ac.scrollToCurrent = function (index) {
                 let suggestioncontainer = $('.' + ac.selectors.suggestionsbox).get(0);
-                let element = $(suggestioncontainer).find('div').eq(index).get(0);
+                let element = $(suggestioncontainer).find('> div').eq(index).get(0);
 
                 if (!element) {
                     return;
@@ -258,9 +265,6 @@
                 const absoluteElementTop = element.offsetTop + (element.clientHeight / 2);
                 const middle = absoluteElementTop - (suggestioncontainer.clientHeight / 2);
                 suggestioncontainer.scrollTo(0, middle);
-
-                // // let currentElement = $(element).get(0);
-                // element.scrollIntoView({ block: "center" });
             };
 
             ac.handleTabPress = function (e) {
@@ -269,37 +273,67 @@
                 if (settings.tabselectionenabled === true) {
                     if (topsuggestion) {
                         el.val(topsuggestion.key.displayObject);
-                        e.data = topsuggestion.obj;
-                        settings.onSelected.call(this, e, topsuggestion.obj);
+                        e.data = topsuggestion.data;
+                        settings.onSelected.call(this, e, topsuggestion.data);
                     }
                     ac.closeSuggestionsBox();
                 }
             };
 
             ac.handleInputChange = function (text) {
+                /* before making the query filter we make a check if the control is disable dor not
+                   if disabled then we must prevent any further data handling and filtering operations.
+                */
+
+                if (ac.disabled) {
+                    return;
+                }
+
                 if (text.length >= ac.settings.minChars) {
-                    // we make use of the call back function so that the ajax response callback is received
-                    // from the callback function.
-                    ac.getSuggestions(function (result) {
-                        if (result && result.length > 0) {
-                            ac.filterSuggestions(result, text);
-
-                            if (ac.filteredSuggestions.length <= 0) {
-                                ac.closeSuggestionsBox();
-                                ac.showNoSuggestionsBox();
-                                return;
-                            }
-
+                    // if the cache is enabled, make sure first the cache store is checked if it contains the
+                    // data for the entered key. if not proceed with the get suggestiions from the given source
+                    // function
+                    if (ac.settings.cacheEnabled) {
+                        ac.filteredSuggestions = ac.getCachedResult(text);
+                        if (ac.filteredSuggestions && ac.filteredSuggestions.length > 0) {
                             ac.buildsuggestionslist(text);
                             ac.showSuggestionsBox();
                             ac.showHint();
                         }
+                        // if no data found from the cache for the entered text, do the usual data fetch from the
+                        // input  source.
                         else {
-                            ac.showNoSuggestionsBox();
+                            ac.initSuggestionsFromSource(text);
                         }
-                    });
+                    }
+                    else {
+                        ac.initSuggestionsFromSource(text);
+                    }
                 }
             };
+
+            ac.initSuggestionsFromSource = function (text) {
+                // we make use of the call back function so that the ajax response callback is received
+                // from the callback function.
+                ac.getSuggestions(function (result) {
+                    if (result && result.length > 0) {
+                        ac.filterSuggestions(result, text);
+
+                        if (ac.filteredSuggestions.length <= 0) {
+                            ac.closeSuggestionsBox();
+                            ac.showNoSuggestionsBox();
+                            return;
+                        }
+
+                        ac.buildsuggestionslist(text);
+                        ac.showSuggestionsBox();
+                        ac.showHint();
+                    }
+                    else {
+                        ac.showNoSuggestionsBox();
+                    }
+                });
+            }
 
             ac.showHint = function () {
                 let settings = ac.settings, el = ac.el;
@@ -325,6 +359,19 @@
                 $("." + ac.selectors.autocomplete_hint).val("");
             }
 
+            ac.clearCache = function () {
+                ac.cachestore = {};
+            }
+
+            ac.setCacheItem = function (key, value) {
+                let cache = ac.cachestore;
+                cache[key] = value;
+            }
+
+            ac.getCachedResult = function (key) {
+                return ac.cachestore[key];
+            }
+
             ac.setTopSuggestion = function () {
                 let filteredSuggestions = ac.filteredSuggestions;
                 if (filteredSuggestions && filteredSuggestions.length > 0) {
@@ -338,6 +385,52 @@
                 ac.topsuggestion = null;
             }
 
+            ac.disable = function () {
+                ac.el.prop('disabled', true);
+                ac.disabled = true;
+                ac.closeSuggestionsBox();
+            }
+
+            ac.enable = function () {
+                ac.el.prop('disabled', false);
+                ac.disabled = false;
+            }
+
+            /* hide the type ahead input box. */
+            ac.hide = function () {
+                ac.el.css('display', 'none');
+                ac.visible = false;
+            }
+
+            ac.dispose = function () {
+                ac.el.off('.autocomplete');
+                ac.clearCache();
+                ac.clearHint();
+            }
+
+            ac.clear = function () {
+                let el = ac.el;
+                el.val('');
+                ac.clearHint();
+                ac.clearCache();
+            }
+
+            ac.setOptions = function (options) {
+                if (!options || jQuery.isEmptyObject(options)) {
+                    ac.logError('Update failed, options are not supplied');
+                    return;
+                }
+
+                $.extend(ac.settings, options);
+                ac.topsuggestion = null;
+                ac.filteredSuggestions = [];
+                ac.clearCache();
+            }
+
+            /* after the drop down layout is built, this function takes care of the alignment of the dropdown layout
+               and also calculates the height and position of the layout based on the input settings and the available
+               window size.
+            */
             ac.showSuggestionsBox = function () {
                 let suggestionsDiv = '.' + ac.selectors.suggestionsbox, control = ac.element, orientation = ac.settings.orientation;
                 let autoalignheight = ac.settings.autoalignheight;
@@ -379,7 +472,7 @@
                         else {
                             css.top = control_margin - containerHeight + "px";
                         }
-                    }                    
+                    }
                 }
                 else {
                     if ((ac.orientation.TOP == orientation && isTopDistanceAvailable) || !isBottomDistanceAvailable) {
@@ -392,9 +485,20 @@
                 $(suggestionsDiv).show();
             };
 
+
+            /* If no suggestions found for the entered key, call this function to show the no suggestions message box */
             ac.showNoSuggestionsBox = function () {
-                let nosuggestionsdiv = utils.helper.getNoSuggestionsDiv(ac.el.width, ac.settings.nosuggestionsText);
+                let settings = ac.settings;
                 let that = ac.element;
+                let nosuggestionsdiv;
+                if ($.isFunction(settings.nosuggestionsTemplate)) {
+                    nosuggestionsdiv = utils.helper.getNoSuggestionsDiv(ac.el.width);
+                    nosuggestionsdiv.innerHTML = settings.nosuggestionsTemplate.call(this, ac.el.val());
+                }
+                else {
+                    nosuggestionsdiv = utils.helper.getNoSuggestionsDiv(ac.el.width, settings.nosuggestionsText);
+                }
+
                 that.parentNode.appendChild(nosuggestionsdiv);
             };
 
@@ -412,7 +516,6 @@
             }
 
             ac.getSuggestions = function (callBack) {
-                let that = ac;
                 let options = ac.settings;
                 let element = ac.element;
                 let dataSource = options.data;
@@ -425,7 +528,6 @@
                 }
 
                 if (typeof dataSource == "function") {
-                    debugger;
                     // use the ajax done function to set the result callback.
                     let ajax = dataSource.call(element.value, function (result) {
                         callBack(result);
@@ -438,8 +540,12 @@
                 for (var i = 0; i < data.length; i++) {
                     let currentObj = this.getDataFromObject(data[i], searchterm);
                     if (currentObj != undefined && !jQuery.isEmptyObject(currentObj)) {
+                        escape(currentObj.key.displayObject);
                         ac.filteredSuggestions.push(currentObj);
                     }
+                }
+                if (ac.settings.cacheEnabled) {
+                    ac.setCacheItem(searchterm, ac.filteredSuggestions);
                 }
             };
 
@@ -464,31 +570,34 @@
                     let currentObj = suggestions[i];
                     if (currentObj != undefined) {
                         s = document.createElement("DIV");
-                        s.setAttribute("data-obj", JSON.stringify(currentObj));
-                        if (settings.searchmode == ac.searchMode.CONTAINS) {
-                            let innerHTML = ac.getContainsSuggestion(currentObj.key.displayObject, searchterm);
-                            s.innerHTML = innerHTML;
-                        }
-                        else {
-                            let innerHtml = "<strong " + (settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.handleEnterKeyPress.displayObject.substr(0, searchterm.length) + "</strong>";
-                            innerHtml += currentObj.key.displayObject.substr(searchterm.length);
+                        $(s).data("data-obj", JSON.stringify(currentObj));
+
+                        if ($.isFunction(settings.itemTemplate)) {
+                            let innerHtml = settings.itemTemplate.call(this, currentObj.data);
                             innerHtml += "<input type='hidden' value='" + currentObj.key.displayObject + "'>";
                             s.innerHTML = innerHtml;
                         }
+                        else {
+                            if (settings.searchmode == ac.searchMode.CONTAINS) {
+                                let innerHTML = ac.getContainsSuggestion(currentObj.key.displayObject, searchterm);
+                                s.innerHTML = innerHTML;
+                            }
+                            else {
+                                let innerHtml = "<strong " + (settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.handleEnterKeyPress.displayObject.substr(0, searchterm.length) + "</strong>";
+                                innerHtml += currentObj.key.displayObject.substr(searchterm.length);
+                                innerHtml += "<input type='hidden' value='" + currentObj.key.displayObject + "'>";
+                                s.innerHTML = innerHtml;
+                            }
+                        }
                         s.addEventListener("click", function (e) {
-                            const data = JSON.parse(this.getAttribute("data-obj"));
-                            e.data = data.obj;
-                            ac.el.val(data.key.displayObject);
-                            settings.onSelected.call(this, e);
-                            ac.closeSuggestionsBox();
+                            ac.handleItemClick(e);
+                        });
+                        s.addEventListener("mousedown", function (e) {
+                            ac.handleItemClick(e);
                         });
                         s.addEventListener("keypress", function (e) {
                             if (e.which == utils.keycodes.ENTER) {
-                                const data = JSON.parse(this.getAttribute("data-obj"));
-                                e.data = data.obj;
-                                ac.el.val(data.key.displayObject);
-                                settings.onSelected.call(this, e);
-                                ac.closeSuggestionsBox();
+                                ac.handleItemClick(e);
                             }
                             else {
                                 e.stopPropagation();
@@ -516,18 +625,15 @@
                 return innerHtml;
             };
 
-            ac.handleItemKeyPress = function (e) {
+            ac.handleItemClick = function (e) {
+                ac.clearHint();
                 if (e) {
-
+                    const data = JSON.parse($(e.currentTarget).data("data-obj"));
+                    e.data = data.data;
+                    ac.el.val(data.key.displayObject);
+                    settings.onSelected.call(this, e, e.data);
+                    ac.closeSuggestionsBox();
                 }
-            };
-
-            ac.handleItemBlur = function (e) {
-                if (e) { }
-            };
-
-            ac.handleItemCllick = function (e) {
-                if (e) { }
             };
 
             ac.getDataFromObject = function (currentObject, searchterm) {
@@ -537,7 +643,7 @@
                 if (searchmode == ac.searchMode.BEGINS) {
                     if (isplainobject) {
                         if (currentObject.substr(0, searchterm.length).toUpperCase() == searchterm.toUpperCase()) {
-                            objecttoreturn.obj = currentObject;
+                            objecttoreturn.data = currentObject;
                             objecttoreturn.key = {
                                 displayObject: currentObject,
                                 keyObject: currentObject
@@ -562,7 +668,7 @@
                 else {
                     if (isplainobject) {
                         if (currentObject.toUpperCase().indexOf(searchterm.toUpperCase()) > -1) {
-                            objecttoreturn.obj = currentObject;
+                            objecttoreturn.data = currentObject;
                             objecttoreturn.key = {
                                 displayObject: currentObject,
                                 keyObject: currentObject
