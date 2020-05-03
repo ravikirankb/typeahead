@@ -1,11 +1,10 @@
 /* simple-typeahead jquery plugin version (#version) 
 
    Author: Ravikiran kb
-   
+
    Description: This is a simple jquery typeahead plugin which auto populates suggestions based on the 
    entered text either from a static array source or a remote ajax source.
    This is inspired from twitter typeahead.
-   Code for this is learnt from other type ahead plugins including twitter typeahead, devbridge autocomplete, w3schools.com
 */
 
 (function ($) {
@@ -43,7 +42,7 @@
 
             var settings = $.extend({
                 data: null,
-                showHint: true,
+                showHint: false,
                 tabselectionenabled: true,
                 onSelected: function (e) {
 
@@ -51,16 +50,13 @@
                 displayExpr: 'Name',
                 keyExpr: 'Id',
                 minSuggestions: 1000,
-                autoCompleteEnabled: false,
                 placeHolderText: '--Select--',
                 nosuggestionsText: '--No Suggestions--',
                 nosuggestionsTemplate: null,
                 itemTemplate: null,
                 minChars: 1,
-                isremoteoptionenabled: false,
                 orientation: 'top',
                 searchmode: 'contains',
-                highlightsearchkey: true,
                 autoalignheight: true,
                 cacheEnabled: false
             }, args);
@@ -142,6 +138,7 @@
                     let hint = utils.helper.getHintInput(parseInt(el.css('width')));
                     hint.style.marginTop = el.css('margin-top');
                     $(parentContainer).prepend(hint);
+                    ac.hint = $(hint);
                 }
             };
 
@@ -361,11 +358,15 @@
             }
 
             ac.setHint = function (value) {
-                $("." + ac.selectors.autocomplete_hint).val(value);
+                if (ac.hint) {
+                    ac.hint.val(value);
+                }
             }
 
             ac.clearHint = function () {
-                $("." + ac.selectors.autocomplete_hint).val("");
+                if (ac.hint) {
+                    ac.hint.val("");
+                }
             }
 
             ac.clearCache = function () {
@@ -592,7 +593,7 @@
                                 s.innerHTML = innerHTML;
                             }
                             else {
-                                let innerHtml = "<strong " + (settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.handleEnterKeyPress.displayObject.substr(0, searchterm.length) + "</strong>";
+                                let innerHtml = "<strong " + (settings.highlightsearchkey ? " class='hightlight-search-key' " : "") + ">" + currentObj.key.displayObject.substr(0, searchterm.length) + "</strong>";
                                 innerHtml += currentObj.key.displayObject.substr(searchterm.length);
                                 innerHtml += "<input type='hidden' value='" + currentObj.key.displayObject + "'>";
                                 s.innerHTML = innerHtml;
