@@ -2,9 +2,11 @@
 
 Simple typeahead jQuery plugin built using jQuery version v3.4.1 is a simple yet powerful autocomplete typeahead control which can convert an input element into a type ahead control.
 
-The control is capable of working with static array data source and also with remote data source through ajax call.
+The control is capable of working with static array data source and also with remote data source through ajax call and is easy and convinient to use.
 It provides auto hint, tab selection, item template and auto height align capability along with other useful features.
 This is designed similar to twitter typeahead with limited and useful features.
+
+Supports arrow key up, down functionality, tab selection and enter key selection mode.
 
 ## API
 ```
