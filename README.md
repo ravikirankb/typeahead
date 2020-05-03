@@ -133,3 +133,12 @@ nosuggestionsTemplate: function (value) { // function accepts the value being ty
                 }
                 
 ```               
+
+
+## Other features
+
+The control provides other useful features like to ability to control the search mode, you can either search by begins or the contains criteria.
+If 'begings' is enabled then the suggestions beginning with the entered text will be displayed else if 'contains' is selected then the suggestions containing the text is displayed.
+
+
+
