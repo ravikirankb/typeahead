@@ -7,7 +7,7 @@ body {
   position: relative;
   display: inline-block;
 }
-input {
+input,input.autocomplete-input {
   border: 1.5px solid #ccc;
   background-color: rgba(0, 0, 0, 0);
   padding: 10px;

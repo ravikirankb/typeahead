@@ -3,7 +3,7 @@
 (function ($) {
     'use strict';
 
-    $.fn.simple_typeahead = function (options) {
+    $.fn.simple_typeahead = function (options, args) {
 
 
         function Typeahead(el, args) {
@@ -112,6 +112,7 @@
                 ac.el.val('');
                 ac.el.attr("placeholder", ac.settings.placeHolderText); // Set placeholder if any.
                 ac.el.attr("autocomplete", "off");
+                ac.el.attr("class", "autocomplete-input");
                 ac.initContainer();
                 ac.initEvents();
             };
@@ -698,10 +699,29 @@
 
         }
 
-        return this.each(function () {
-            var element = this;
+        const key = 'typeahead';
 
-            var instance = new Typeahead(element, options);
+        if (!options) {
+            if (this.length > 1) {
+                return $(this.get(1)).data(key);
+            }
+            else {
+                return this.first().data(key);
+            }
+        }
+
+        return this.each(function () {
+            let element = $(this),
+                currentInstance = element.data(key);
+
+            if (typeof options === 'string') {
+                if (currentInstance && typeof currentInstance[options] === 'function') {
+                    currentInstance[options](args);
+                }
+            } else {
+                let instance = new Typeahead(this, options);
+                element.data(key, instance);
+            }
         })
     }
 })(jQuery)
