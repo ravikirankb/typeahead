@@ -16,24 +16,29 @@
         function Typeahead(el, args) {
             let ac = this;
 
-            ac.selectors = {
-                selected_item: "autocomplete-active",
-                suggestionsbox: "autocomplete-items",
-                autcomplete_container: "autocomplete",
-                autocomplete_hint: "autocomplete-hint"
+
+            /* Constants library */
+            let const_lib = {
+                selectors: {
+                    selected_item: "autocomplete-active",
+                    suggestionsbox: "autocomplete-items",
+                    autcomplete_container: "autocomplete",
+                    autocomplete_hint: "autocomplete-hint"
+                },
+
+                orientation: {
+                    TOP: 'top',
+                    BOTTOM: 'bottom'
+                },
+
+                searchMode: {
+                    BEGINS: 'begins',
+                    CONTAINS: 'contains'
+                },
+
+                minspacecriteria: 125
             };
 
-            ac.orientation = {
-                TOP: 'top',
-                BOTTOM: 'bottom'
-            };
-
-            ac.searchMode = {
-                BEGINS: 'begins',
-                CONTAINS: 'contains'
-            };
-
-            ac.minspacecriteria = 125;
 
             ac.topsuggestion = null;
             ac.filteredSuggestions = [];
@@ -129,7 +134,7 @@
             ac.initContainer = function () {
                 let el = ac.el, parentContainer = utils.helper.getParentContainer(el.width);
                 el.wrap(parentContainer);
-                ac.parentContainer = "." + ac.selectors.autcomplete_container;
+                ac.parentContainer = "." + const_lib.selectors.autcomplete_container;
                 ac.handleHintBox();
             };
 
@@ -195,7 +200,7 @@
 
             ac.handleEnterKeyPress = function (e) {
                 if (e) {
-                    let activeElement = $("." + ac.selectors.selected_item), settings = ac.settings;
+                    let activeElement = $("." + const_lib.selectors.selected_item), settings = ac.settings;
                     if (activeElement.length > 0) {
                         let data = JSON.parse(activeElement.data("data-obj"));
                         e.data = data;
@@ -208,8 +213,8 @@
             ac.handleArrowUp = function (e) {
                 e.target.selectionEnd = ac.el.val().length;
                 ac.clearHint();
-                let currentactive = $('.' + ac.selectors.selected_item);
-                let length = $('.' + ac.selectors.suggestionsbox).find('> div').length;
+                let currentactive = $('.' + const_lib.selectors.selected_item);
+                let length = $('.' + const_lib.selectors.suggestionsbox).find('> div').length;
                 if (currentactive.length > 0) {
                     if (ac.selectedIndex == 0) {
                         ac.selectedIndex = length - 1;
@@ -223,15 +228,15 @@
                 }
                 ac.setActiveElement(ac.selectedIndex, currentactive);
                 // set value of the input box to the current active element text
-                currentactive = $('.' + ac.selectors.selected_item);
+                currentactive = $('.' + const_lib.selectors.selected_item);
                 ac.el.val(currentactive.find("input:hidden").val());
                 ac.scrollToCurrent(ac.selectedIndex);
             };
 
             ac.handleArrowDown = function (e) {
                 ac.clearHint();
-                let currentactive = $('.' + ac.selectors.selected_item);
-                let length = $('.' + ac.selectors.suggestionsbox).find('> div').length;
+                let currentactive = $('.' + const_lib.selectors.selected_item);
+                let length = $('.' + const_lib.selectors.suggestionsbox).find('> div').length;
                 if (currentactive.length > 0) {
                     if (ac.selectedIndex == length - 1) {
                         ac.selectedIndex = 0;
@@ -245,24 +250,24 @@
                 }
                 ac.setActiveElement(ac.selectedIndex, currentactive);
                 // set value of the input box to the current active element text
-                currentactive = $('.' + ac.selectors.selected_item);
+                currentactive = $('.' + const_lib.selectors.selected_item);
                 ac.el.val(currentactive.find("input:hidden").val());
                 ac.scrollToCurrent(ac.selectedIndex);
             };
 
             ac.setActiveElement = function (index, currentActiveEle) {
                 if (currentActiveEle && currentActiveEle.length > 0) {
-                    $(currentActiveEle).removeClass(ac.selectors.selected_item);
+                    $(currentActiveEle).removeClass(const_lib.selectors.selected_item);
                 }
 
-                let suggestioncontainer = $('.' + ac.selectors.suggestionsbox);
+                let suggestioncontainer = $('.' + const_lib.selectors.suggestionsbox);
                 let activeToSet = $(suggestioncontainer).find('> div').eq(index);
-                $(activeToSet).addClass(ac.selectors.selected_item);
+                $(activeToSet).addClass(const_lib.selectors.selected_item);
                 $(activeToSet).focus();
             };
 
             ac.scrollToCurrent = function (index) {
-                let suggestioncontainer = $('.' + ac.selectors.suggestionsbox).get(0);
+                let suggestioncontainer = $('.' + const_lib.selectors.suggestionsbox).get(0);
                 let element = $(suggestioncontainer).find('> div').eq(index).get(0);
 
                 if (!element) {
@@ -443,7 +448,7 @@
                window size.
             */
             ac.showSuggestionsBox = function () {
-                let suggestionsDiv = '.' + ac.selectors.suggestionsbox, control = ac.element, orientation = ac.settings.orientation;
+                let suggestionsDiv = '.' + const_lib.selectors.suggestionsbox, control = ac.element, orientation = ac.settings.orientation;
                 let autoalignheight = ac.settings.autoalignheight;
                 let left_right_margin = { // add same left, right margin as the input element.
                     right: control.style.marginRight,
@@ -465,11 +470,11 @@
                 let containerHeight = $(suggestionsDiv).outerHeight();
                 const control_margin = parseInt(ac.el.css('margin-top'));
 
-                let isBottomDistanceAvailable = Math.max(el_dim.bottomDistance, ac.minspacecriteria) == el_dim.bottomDistance ? true : false;
-                let isTopDistanceAvailable = Math.max(el_dim.topDistance, ac.minspacecriteria) == el_dim.topDistance ? true : false;
+                let isBottomDistanceAvailable = Math.max(el_dim.bottomDistance, const_lib.minspacecriteria) == el_dim.bottomDistance ? true : false;
+                let isTopDistanceAvailable = Math.max(el_dim.topDistance, const_lib.minspacecriteria) == el_dim.topDistance ? true : false;
 
                 if (autoalignheight) {
-                    if ((ac.orientation.TOP == orientation && isTopDistanceAvailable) || !isBottomDistanceAvailable) {
+                    if ((const_lib.orientation.TOP == orientation && isTopDistanceAvailable) || !isBottomDistanceAvailable) {
                         css.borderTop = '1px solid #d4d4d4';
                         const containerOverflow = containerHeight > el_dim.topDistance;
                         if (containerOverflow) {
@@ -486,7 +491,7 @@
                     }
                 }
                 else {
-                    if ((ac.orientation.TOP == orientation && isTopDistanceAvailable) || !isBottomDistanceAvailable) {
+                    if ((const_lib.orientation.TOP == orientation && isTopDistanceAvailable) || !isBottomDistanceAvailable) {
                         css.borderTop = "1px solid #d4d4d4";
                         css.top = control_margin - containerHeight + "px";
                     }
@@ -589,7 +594,7 @@
                             s.innerHTML = innerHtml;
                         }
                         else {
-                            if (settings.searchmode == ac.searchMode.CONTAINS) {
+                            if (settings.searchmode == const_lib.searchMode.CONTAINS) {
                                 let innerHTML = ac.getContainsSuggestion(currentObj.key.displayObject, searchterm);
                                 s.innerHTML = innerHTML;
                             }
@@ -615,10 +620,10 @@
                             }
                         });
                         s.addEventListener("mouseover", function (e) {
-                            $(this).addClass(ac.selectors.selected_item);
+                            $(this).addClass(const_lib.selectors.selected_item);
                         });
                         s.addEventListener("mouseout", function (e) {
-                            $(this).removeClass(ac.selectors.selected_item);
+                            $(this).removeClass(const_lib.selectors.selected_item);
                         });
                         div.appendChild(s);
                     }
@@ -651,7 +656,7 @@
                 const searchmode = this.settings.searchmode;
                 const isplainobject = typeof (currentObject) === 'string';
                 let objecttoreturn = {};
-                if (searchmode == ac.searchMode.BEGINS) {
+                if (searchmode == const_lib.searchMode.BEGINS) {
                     if (isplainobject) {
                         if (currentObject.substr(0, searchterm.length).toUpperCase() == searchterm.toUpperCase()) {
                             objecttoreturn.data = currentObject;
