@@ -1,4 +1,12 @@
+/* simple-typeahead jquery plugin version (#version) 
 
+   Author: Ravikiran kb
+   
+   Description: This is a simple jquery typeahead plugin which auto populates suggestions based on the 
+   entered text either from a static array source or a remote ajax source.
+   This is inspired from twitter typeahead.
+   Code for this is learnt from other type ahead plugins including twitter typeahead, devbridge autocomplete, w3schools.com
+*/
 
 (function ($) {
     'use strict';
