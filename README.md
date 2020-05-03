@@ -164,11 +164,62 @@ dispose: Dispose the control, removes all events and clears any cache, renders t
 
 ## Example
 
-$("").simple_typeahead().disable();
+$("#mytextbox").simple_typeahead().disable();
 
 or
 
-$("").simple_typeahead('disable');
+$("#mytextbox").simple_typeahead('disable');
 
 
 
+## Styling
+
+Use the below styles to customize the look and feel of the suggestions layout, set custom styles to the active element etc.
+
+```
+
+autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: 1px solid #d4d4d4;
+  border-top: none;
+  z-index: 9999;
+  /*position the autocomplete items to be the same width as the container:*/
+  top: 100%;
+  /* bottom:100% !important;
+  top:auto!important; */
+  left: 0;
+  right: 0;
+  max-height:300px;
+  overflow:auto;
+  height:auto;
+  /* white-space: nowrap; */
+}
+
+.autocomplete-items > div{
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.autocomplete-active {
+  /*when navigating through the items using the arrow keys:*/
+  background-color: DodgerBlue !important;
+  color: #ffffff;
+}
+
+```
+
+
+## License 
+
+Simple Typeahead is freely distributable under the terms of an MIT-style license.
+
+## Author
+
+Ravikiran KB / https://github.com/ravikirankb
+
+## Credits
+
+twitter typeahead (https://twitter.github.io/typeahead.js/examples/), www.devbridge.com, www.w3schools.com
