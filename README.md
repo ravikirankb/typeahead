@@ -138,7 +138,7 @@ nosuggestionsTemplate: function (value) { // function accepts the value being ty
 ## Other features
 
 The control provides other useful features like to ability to control the search mode, you can either search by begins or the contains criteria.
-If 'begings' is enabled then the suggestions beginning with the entered text will be displayed else if 'contains' is selected then the suggestions containing the text is displayed.
+If 'begins' is enabled then the suggestions beginning with the entered text will be displayed else if 'contains' is selected then the suggestions containing the text is displayed.
 
 
 ![Alt text](/BeginsSearch.PNG?raw=true "Optional Title")
@@ -148,6 +148,27 @@ If 'begings' is enabled then the suggestions beginning with the entered text wil
 
 You can enable caching by setting the cacheEnabled property to true for local filtering of data, instead of having to query each time the input is changed. The cache container may increase the memory usage of the control. Use it according to the requirement.
 
+
+
+## Instance Methods
+
+The control provides instance methods to update the required settings.
+
+setOptions: Used to update the options of the control as and when required.
+
+clearCache: Clears the cache store
+
+clear: Clears the value of the control
+
+dispose: Dispose the control, removes all events and clears any cache, renders the control as plain element.
+
+## Example
+
+$("").simple_typeahead().disable();
+
+or
+
+$("").simple_typeahead('disable');
 
 
 
