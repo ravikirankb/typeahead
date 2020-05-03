@@ -33,6 +33,9 @@ Find below the list of input settings available for the plugin.
 | autoalignheight | true | If set to true then the height of the suggestions box is automatically aligned to fit the space available in the viewport |
 | cacheEnabled | false | Enabled this property for the caching of the filtered result set |
 
+## Live Demo:
+
+https://ravikirankb.github.io/typeahead/
 
 
 ## Basic Usage
