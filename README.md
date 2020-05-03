@@ -1,1 +1,1 @@
-# typeahead
+Simple Typeahead
