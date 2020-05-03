@@ -141,4 +141,13 @@ The control provides other useful features like to ability to control the search
 If 'begings' is enabled then the suggestions beginning with the entered text will be displayed else if 'contains' is selected then the suggestions containing the text is displayed.
 
 
+![Alt text](/BeginsSearch.PNG?raw=true "Optional Title")
+
+![Alt text](/ContainsSearch.PNG?raw=true "Optional Title")
+
+
+You can enable caching by setting the cacheEnabled property to true for local filtering of data, instead of having to query each time the input is changed. The cache container may increase the memory usage of the control. Use it according to the requirement.
+
+
+
 
