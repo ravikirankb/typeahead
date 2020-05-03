@@ -26,28 +26,37 @@
             { name: 'England', count: 172, id: 15 }, { name: 'Australia', count: 512, id: 16 },
             { name: 'New Zealand', count: 62, id: 17 }, { name: 'Mexico', count: 2, id: 18 },
             { name: 'Germany', count: 72, id: 19 }, { name: 'Switzerland', count: 5, id: 20 }];
-            let typeahead = $("input").simple_typeahead({
+
+            $("#mytextbox").simple_typeahead({
                 data: countries, orientation: 'bottom', onSelected: function (e, data) {
                     debugger;
                     var i = e;
                     console.log(data);
                 },
-                searchmode:'contains'
-                // keyExpr: 'id',
-                // displayExpr: 'name',
-                // itemTemplate: function (obj) {
-                //     if (obj) {
-                //         return '<div> <label>' + obj.name + '  --  ' + obj.count + '</label></div>';
-                //     }
-                //     return '';
-                // },
-                // nosuggestionsTemplate: function (value) { // function accepts the value being types in the control.
-                //     return "<div><label>Oops no suggestion found for the key " + "'" + value + "'" + "</label></div>";
-                // }
+                searchmode: 'contains',
+                showHint: true,
             });
 
-            // $("input").simple_typeahead().disable();
-            // $("input").simple_typeahead().enable();
+            $("#mytextbox1").simple_typeahead({
+                data: covid_countries, orientation: 'bottom', onSelected: function (e, data) {
+                    debugger;
+                    var i = e;
+                    console.log(data);
+                },
+                searchmode: 'contains',
+                keyExpr: 'id',
+                displayExpr: 'name',
+                showHint: true,
+                itemTemplate: function (obj) {
+                    if (obj) {
+                        return '<div> <label>' + obj.name + '  --  ' + obj.count + '</label></div>';
+                    }
+                    return '';
+                },
+                nosuggestionsTemplate: function (value) { // function accepts the value being types in the control.
+                    return "<div><label>Oops no suggestion found for the key " + "'" + value + "'" + "</label></div>";
+                }
+            });
         });
     </script>
 </head>
@@ -56,9 +65,15 @@
     <h3>Type ahead</h3>
     <!-- <h4>Type ahead</h4>
     <h5>Type ahead</h5> -->
-    <input value="Enter" id="mytextbox " style="width: 300px;" placeholder="Enter">
-    <h3>Type ahead</h3>
-    <!-- <input value="Enter" id="mytextbox1 " style="width: 300px;" placeholder="Enter"> -->
+    <div>
+        <h4>Without Template</h4>
+        <input value="Enter" id="mytextbox" style="width: 300px;" placeholder="Enter">
+    </div>
+
+    <div>
+        <h4>Template Dropdown</h4>
+        <input value="Enter" id="mytextbox1" style="width: 300px;" placeholder="Enter">
+    </div>
 </body>
 
 </html>

@@ -129,11 +129,12 @@
             ac.initContainer = function () {
                 let el = ac.el, parentContainer = utils.helper.getParentContainer(el.width);
                 el.wrap(parentContainer);
+                ac.parentContainer = "." + ac.selectors.autcomplete_container;
                 ac.handleHintBox();
             };
 
             ac.handleHintBox = function () {
-                let settings = ac.settings, el = ac.el, parentContainer = "." + ac.selectors.autcomplete_container;
+                let settings = ac.settings, el = ac.el, parentContainer = ac.parentContainer;
                 if (settings.showHint) {
                     let hint = utils.helper.getHintInput(parseInt(el.css('width')));
                     hint.style.marginTop = el.css('margin-top');
